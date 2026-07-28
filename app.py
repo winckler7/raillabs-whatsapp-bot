@@ -8,7 +8,7 @@ load_dotenv()
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "sales_agent"))
 from agente_ventas import chat, add_user_message, add_assistant_message
-from db import init_db, get_historial, guardar_historial
+from db import init_db, get_historial, guardar_historial, ya_procesado
 
 app = Flask(__name__)
 init_db()
@@ -54,6 +54,11 @@ def receive_message():
     except (KeyError, IndexError, TypeError):
         # No es un mensaje nuevo (p. ej. es un "status update"): lo ignoramos.
         return jsonify(status="ignored"), 200
+
+    if ya_procesado(message["id"]):
+        # Meta reentrega el mismo mensaje si nuestro servidor fallo la
+        # primera vez -- sin esto, cada reentrega se responde de nuevo.
+        return jsonify(status="duplicado"), 200
 
     sender = normalize_mx_number(message["from"])
 

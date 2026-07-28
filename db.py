@@ -22,6 +22,26 @@ def init_db():
             )
             """
         )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS mensajes_procesados (
+                message_id TEXT PRIMARY KEY,
+                procesado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+            )
+            """
+        )
+
+
+def ya_procesado(message_id):
+    # Meta puede reentregar el mismo webhook (ej. si nuestro servidor fallo
+    # la primera vez) -- sin esto, cada reentrega se responde como si fuera
+    # un mensaje nuevo. Inserta el id y regresa True solo si ya existia.
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO mensajes_procesados (message_id) VALUES (%s) ON CONFLICT DO NOTHING",
+            (message_id,),
+        )
+        return cur.rowcount == 0
 
 
 def get_historial(telefono):
