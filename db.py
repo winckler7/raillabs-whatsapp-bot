@@ -64,3 +64,9 @@ def guardar_historial(telefono, historial):
             """,
             (telefono, Json(historial)),
         )
+
+
+def borrar_historial(telefono):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("DELETE FROM conversaciones WHERE telefono = %s", (telefono,))
+        return cur.rowcount > 0

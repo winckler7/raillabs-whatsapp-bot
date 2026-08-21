@@ -8,7 +8,7 @@ load_dotenv()
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "sales_agent"))
 from agente_ventas import chat, add_user_message, add_assistant_message
-from db import init_db, get_historial, guardar_historial, ya_procesado
+from db import init_db, get_historial, guardar_historial, ya_procesado, borrar_historial
 
 app = Flask(__name__)
 init_db()
@@ -69,6 +69,13 @@ def receive_message():
         return jsonify(status="ignored"), 200
 
     text = message["text"]["body"]
+
+    if text.strip().upper() == "BORRAR MIS DATOS":
+        # Cumple lo prometido en la pagina de eliminacion de datos exigida
+        # por Meta para publicar la app.
+        borrar_historial(sender)
+        send_message(sender, "Listo, borramos tu historial de conversación con nosotros. Si nos vuelves a escribir, empezamos desde cero. 🙏")
+        return jsonify(status="borrado"), 200
 
     messages = get_historial(sender)
     add_user_message(messages, text)
