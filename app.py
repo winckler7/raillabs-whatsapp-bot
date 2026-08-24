@@ -1,6 +1,5 @@
 import os
 import sys
-import requests
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 
@@ -18,8 +17,12 @@ from db import (
     get_or_create_conversacion,
     registrar_mensaje,
 )
+from graph_api import send_message
+from panel import panel_bp
 
 app = Flask(__name__)
+app.secret_key = os.environ["FLASK_SECRET_KEY"]
+app.register_blueprint(panel_bp)
 init_db()
 
 # El verify token lo configura Meta a nivel de la App (no por número de
@@ -27,7 +30,6 @@ init_db()
 # -- las credenciales de envío (token, phone_number_id) sí son por cuenta y
 # se buscan en la tabla `cuentas` con get_cuenta_by_phone_number_id().
 VERIFY_TOKEN = os.environ["VERIFY_TOKEN"]
-GRAPH_API_VERSION = os.environ.get("GRAPH_API_VERSION", "v20.0")
 
 
 def normalize_mx_number(number):
@@ -78,14 +80,17 @@ def receive_message():
         return jsonify(status="cuenta_no_encontrada"), 200
 
     sender = normalize_mx_number(message["from"])
-    conversacion_id = get_or_create_conversacion(cuenta["id"], sender)
+    conversacion = get_or_create_conversacion(cuenta["id"], sender)
+    conversacion_id = conversacion["id"]
 
     if message.get("type") != "text":
         # Por ahora solo entendemos texto -- avisamos en vez de dejar al
-        # cliente sin respuesta (las notas de voz son muy comunes en WhatsApp).
-        respuesta = "Por ahora solo puedo leer mensajes de texto, ¿me lo escribes con palabras? 🙏"
-        registrar_mensaje(conversacion_id, "saliente", respuesta)
-        send_message(cuenta, sender, respuesta)
+        # cliente sin respuesta (las notas de voz son muy comunes en WhatsApp),
+        # a menos que un humano ya haya tomado el control desde el panel.
+        if conversacion["modo"] == "bot":
+            respuesta = "Por ahora solo puedo leer mensajes de texto, ¿me lo escribes con palabras? 🙏"
+            registrar_mensaje(conversacion_id, "saliente", respuesta)
+            send_message(cuenta, sender, respuesta)
         return jsonify(status="ignored"), 200
 
     text = message["text"]["body"]
@@ -95,10 +100,16 @@ def receive_message():
         # Cumple lo prometido en la pagina de eliminacion de datos exigida
         # por Meta para publicar la app. Borra la conversación (y en cascada
         # sus mensajes, incluido el que se acaba de registrar arriba) --
-        # no se registra la confirmación, para no dejar rastro nuevo.
+        # no se registra la confirmación, para no dejar rastro nuevo. Corre
+        # siempre, sin importar el modo -- es un requisito de cumplimiento.
         borrar_historial(cuenta["id"], sender)
         send_message(cuenta, sender, "Listo, borramos tu historial de conversación con nosotros. Si nos vuelves a escribir, empezamos desde cero. 🙏")
         return jsonify(status="borrado"), 200
+
+    if conversacion["modo"] == "humano":
+        # Un humano tomó el control de esta conversación desde el panel --
+        # el mensaje ya quedó registrado arriba, pero el bot no responde.
+        return jsonify(status="modo_humano"), 200
 
     messages = get_historial(cuenta["id"], sender)
     add_user_message(messages, text)
@@ -110,25 +121,6 @@ def receive_message():
     send_message(cuenta, sender, respuesta)
 
     return jsonify(status="ok"), 200
-
-
-def send_message(cuenta, to, body):
-    # Envía un mensaje de texto saliente al usuario `to` vía la Graph API de
-    # Meta, usando el token y phone_number_id de la cuenta correspondiente.
-    graph_url = f"https://graph.facebook.com/{GRAPH_API_VERSION}/{cuenta['phone_number_id']}/messages"
-    headers = {"Authorization": f"Bearer {cuenta['whatsapp_token']}"}
-    payload = {
-        "messaging_product": "whatsapp",
-        "to": to,
-        "type": "text",
-        "text": {"body": body},
-    }
-    response = requests.post(graph_url, headers=headers, json=payload)
-    if not response.ok:
-        # Meta describe el motivo real del rechazo en el body (ej. número no
-        # autorizado, token vencido, etc.) — el código HTTP solo no alcanza.
-        print("Error de WhatsApp API:", response.status_code, response.text, flush=True)
-    response.raise_for_status()
 
 
 if __name__ == "__main__":

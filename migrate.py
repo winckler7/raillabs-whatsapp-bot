@@ -58,6 +58,7 @@ def crear_cuentas_y_columnas(cur):
         "ALTER TABLE conversaciones ADD COLUMN IF NOT EXISTS modo TEXT NOT NULL DEFAULT 'bot'"
     )
     cur.execute("ALTER TABLE conversaciones ADD COLUMN IF NOT EXISTS notas TEXT")
+    cur.execute("ALTER TABLE conversaciones ADD COLUMN IF NOT EXISTS visto_en TIMESTAMPTZ")
 
 
 def crear_tabla_mensajes(cur):

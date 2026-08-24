@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>RailLabs · Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='panel.css') }}">
+</head>
+<body>
+    <div id="app">
+        <aside id="sidebar">
+            <div id="sidebar-header">
+                <select id="selector-cuenta"></select>
+                <form action="{{ url_for('panel.logout') }}" method="post">
+                    <button type="submit" id="btn-logout" title="Cerrar sesión">⎋</button>
+                </form>
+            </div>
+            <div id="buscador-wrap">
+                <input type="text" id="buscador" placeholder="Buscar por nombre o número">
+            </div>
+            <ul id="lista-conversaciones"></ul>
+        </aside>
+
+        <main id="panel-derecho">
+            <div id="vacio" class="vacio">Selecciona una conversación</div>
+
+            <div id="hilo" class="oculto">
+                <header id="hilo-header">
+                    <div id="contacto-info">
+                        <span id="contacto-nombre"></span>
+                        <span id="contacto-detalle"></span>
+                    </div>
+                    <div id="controles">
+                        <select id="selector-estado">
+                            <option value="abierta">Abierta</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="resuelta">Resuelta</option>
+                        </select>
+                        <button id="btn-modo"></button>
+                        <button id="btn-notas-toggle">Notas</button>
+                    </div>
+                </header>
+
+                <div id="panel-notas" class="oculto">
+                    <textarea id="notas" placeholder="Notas internas..."></textarea>
+                    <button id="btn-guardar-notas">Guardar notas</button>
+                </div>
+
+                <div id="mensajes"></div>
+
+                <form id="form-responder">
+                    <textarea id="texto-respuesta" placeholder="Escribe un mensaje" rows="1"></textarea>
+                    <button type="submit">Enviar</button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='panel.js') }}"></script>
+</body>
+</html>
