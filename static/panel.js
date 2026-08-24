@@ -146,20 +146,30 @@ function scrollAbajo() {
     contenedor.scrollTop = contenedor.scrollHeight;
 }
 
+let pollEnCurso = false;
+
 async function pollMensajesNuevos() {
-    if (!state.conversacionActiva) return;
-    const url = state.ultimoMensajeId
-        ? `/panel/api/conversaciones/${state.conversacionActiva}/mensajes?after_id=${state.ultimoMensajeId}`
-        : `/panel/api/conversaciones/${state.conversacionActiva}/mensajes`;
-    const mensajes = await api(url);
-    if (!mensajes || mensajes.length === 0) return;
+    // Guard contra llamadas concurrentes -- el timer periódico y el envío
+    // manual pueden disparar esto casi al mismo tiempo, y sin esto ambas
+    // llamadas leen el mismo ultimoMensajeId viejo y duplican el render.
+    if (!state.conversacionActiva || pollEnCurso) return;
+    pollEnCurso = true;
+    try {
+        const url = state.ultimoMensajeId
+            ? `/panel/api/conversaciones/${state.conversacionActiva}/mensajes?after_id=${state.ultimoMensajeId}`
+            : `/panel/api/conversaciones/${state.conversacionActiva}/mensajes`;
+        const mensajes = await api(url);
+        if (!mensajes || mensajes.length === 0) return;
 
-    mensajes.forEach(renderMensaje);
-    state.ultimoMensajeId = mensajes[mensajes.length - 1].id;
-    scrollAbajo();
+        mensajes.forEach(renderMensaje);
+        state.ultimoMensajeId = mensajes[mensajes.length - 1].id;
+        scrollAbajo();
 
-    if (mensajes.some((m) => m.direccion === "entrante")) {
-        await api(`/panel/api/conversaciones/${state.conversacionActiva}/visto`, { method: "POST" });
+        if (mensajes.some((m) => m.direccion === "entrante")) {
+            await api(`/panel/api/conversaciones/${state.conversacionActiva}/visto`, { method: "POST" });
+        }
+    } finally {
+        pollEnCurso = false;
     }
 }
 
