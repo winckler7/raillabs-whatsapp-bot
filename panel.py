@@ -17,6 +17,7 @@ from db import (
     registrar_mensaje,
     set_estado,
     set_modo,
+    set_nombre,
     set_notas,
 )
 from graph_api import send_message
@@ -120,6 +121,14 @@ def api_set_modo(conversacion_id):
     if modo not in ("bot", "humano"):
         return jsonify(error="modo inválido"), 400
     set_modo(conversacion_id, modo)
+    return jsonify(status="ok")
+
+
+@panel_bp.route("/api/conversaciones/<int:conversacion_id>/nombre", methods=["POST"])
+@login_required
+def api_set_nombre(conversacion_id):
+    nombre = (request.get_json(silent=True) or {}).get("nombre", "").strip()
+    set_nombre(conversacion_id, nombre or None)
     return jsonify(status="ok")
 
 

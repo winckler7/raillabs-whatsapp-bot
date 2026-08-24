@@ -116,7 +116,7 @@ def get_conversacion(conversacion_id):
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute(
             """
-            SELECT id, cuenta_id, telefono, estado, modo, notas, primer_contacto, ultimo_mensaje
+            SELECT id, cuenta_id, telefono, estado, modo, notas, nombre, primer_contacto, ultimo_mensaje
             FROM conversaciones WHERE id = %s
             """,
             (conversacion_id,),
@@ -125,7 +125,7 @@ def get_conversacion(conversacion_id):
         if not row:
             return None
         columnas = [
-            "id", "cuenta_id", "telefono", "estado", "modo", "notas",
+            "id", "cuenta_id", "telefono", "estado", "modo", "notas", "nombre",
             "primer_contacto", "ultimo_mensaje",
         ]
         return dict(zip(columnas, row))
@@ -136,7 +136,7 @@ def listar_conversaciones(cuenta_id):
         cur.execute(
             """
             SELECT
-                c.id, c.telefono, c.estado, c.modo, c.ultimo_mensaje,
+                c.id, c.telefono, c.estado, c.modo, c.nombre, c.ultimo_mensaje,
                 (
                     SELECT contenido FROM mensajes m
                     WHERE m.conversacion_id = c.id
@@ -155,7 +155,7 @@ def listar_conversaciones(cuenta_id):
             (cuenta_id,),
         )
         columnas = [
-            "id", "telefono", "estado", "modo", "ultimo_mensaje",
+            "id", "telefono", "estado", "modo", "nombre", "ultimo_mensaje",
             "ultimo_texto", "no_leidos",
         ]
         return [dict(zip(columnas, row)) for row in cur.fetchall()]
@@ -203,6 +203,24 @@ def set_modo(conversacion_id, modo):
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute(
             "UPDATE conversaciones SET modo = %s WHERE id = %s", (modo, conversacion_id)
+        )
+
+
+def set_nombre(conversacion_id, nombre):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            "UPDATE conversaciones SET nombre = %s WHERE id = %s", (nombre, conversacion_id)
+        )
+
+
+def set_nombre_automatico(conversacion_id, nombre):
+    # Se llama con el nombre de perfil que manda WhatsApp en cada mensaje --
+    # solo lo guarda si todavía no hay uno (para no pisar una edición manual
+    # hecha desde el panel).
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            "UPDATE conversaciones SET nombre = %s WHERE id = %s AND nombre IS NULL",
+            (nombre, conversacion_id),
         )
 
 

@@ -58,7 +58,11 @@ async function cargarConversaciones() {
 function renderListaConversaciones() {
     const lista = document.getElementById("lista-conversaciones");
     const filtro = state.filtro.toLowerCase();
-    const filtradas = state.conversaciones.filter((c) => c.telefono.toLowerCase().includes(filtro));
+    const filtradas = state.conversaciones.filter(
+        (c) =>
+            c.telefono.toLowerCase().includes(filtro) ||
+            (c.nombre && c.nombre.toLowerCase().includes(filtro))
+    );
 
     lista.innerHTML = filtradas
         .map((c) => {
@@ -68,7 +72,7 @@ function renderListaConversaciones() {
             return `
                 <li class="conv-item ${activo}" data-id="${c.id}">
                     <div class="conv-main">
-                        <div class="conv-nombre">${escapeHtml(c.telefono)}</div>
+                        <div class="conv-nombre">${escapeHtml(c.nombre || c.telefono)}</div>
                         <div class="conv-preview">${preview}</div>
                     </div>
                     <div class="conv-side">
@@ -100,9 +104,7 @@ async function seleccionarConversacion(id) {
     if (!detalle) return;
     state.detalleActivo = detalle;
 
-    document.getElementById("contacto-nombre").textContent = detalle.telefono;
-    document.getElementById("contacto-detalle").textContent =
-        "Primer contacto: " + new Date(detalle.primer_contacto).toLocaleDateString("es-MX");
+    mostrarNombreContacto(detalle);
     document.getElementById("selector-estado").value = detalle.estado;
     document.getElementById("notas").value = detalle.notas || "";
     actualizarBotonModo(detalle.modo);
@@ -118,6 +120,15 @@ async function seleccionarConversacion(id) {
 
     await api(`/panel/api/conversaciones/${id}/visto`, { method: "POST" });
     await cargarConversaciones();
+}
+
+function mostrarNombreContacto(detalle) {
+    document.getElementById("contacto-nombre").textContent = detalle.nombre || detalle.telefono;
+    document.getElementById("contacto-nombre-input").value = detalle.nombre || "";
+    document.getElementById("contacto-detalle").textContent =
+        (detalle.nombre ? detalle.telefono + " · " : "") +
+        "Primer contacto: " +
+        new Date(detalle.primer_contacto).toLocaleDateString("es-MX");
 }
 
 function actualizarBotonModo(modo) {
@@ -204,6 +215,39 @@ document.getElementById("btn-modo").addEventListener("click", async (e) => {
     });
     actualizarBotonModo(nuevoModo);
 });
+
+document.getElementById("btn-editar-nombre").addEventListener("click", () => {
+    document.getElementById("contacto-nombre").classList.add("oculto");
+    const input = document.getElementById("contacto-nombre-input");
+    input.classList.remove("oculto");
+    input.focus();
+    input.select();
+});
+
+async function guardarNombreContacto() {
+    if (!state.conversacionActiva) return;
+    const input = document.getElementById("contacto-nombre-input");
+    const nombre = input.value.trim();
+    input.classList.add("oculto");
+    document.getElementById("contacto-nombre").classList.remove("oculto");
+
+    await api(`/panel/api/conversaciones/${state.conversacionActiva}/nombre`, {
+        method: "POST",
+        body: JSON.stringify({ nombre }),
+    });
+    state.detalleActivo.nombre = nombre || null;
+    mostrarNombreContacto(state.detalleActivo);
+    cargarConversaciones();
+}
+
+document.getElementById("contacto-nombre-input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        guardarNombreContacto();
+    }
+});
+
+document.getElementById("contacto-nombre-input").addEventListener("blur", guardarNombreContacto);
 
 document.getElementById("btn-notas-toggle").addEventListener("click", () => {
     document.getElementById("panel-notas").classList.toggle("oculto");

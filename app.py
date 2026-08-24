@@ -16,6 +16,7 @@ from db import (
     get_cuenta_by_phone_number_id,
     get_or_create_conversacion,
     registrar_mensaje,
+    set_nombre_automatico,
 )
 from graph_api import send_message
 from panel import panel_bp
@@ -82,6 +83,13 @@ def receive_message():
     sender = normalize_mx_number(message["from"])
     conversacion = get_or_create_conversacion(cuenta["id"], sender)
     conversacion_id = conversacion["id"]
+
+    # WhatsApp manda el nombre de perfil del contacto junto con el mensaje --
+    # se guarda como sugerencia inicial, sin pisar un nombre puesto a mano
+    # desde el panel (set_nombre_automatico solo escribe si sigue en null).
+    nombre_perfil = (value.get("contacts") or [{}])[0].get("profile", {}).get("name")
+    if nombre_perfil:
+        set_nombre_automatico(conversacion_id, nombre_perfil)
 
     if message.get("type") != "text":
         # Por ahora solo entendemos texto -- avisamos en vez de dejar al
