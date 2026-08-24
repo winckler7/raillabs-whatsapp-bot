@@ -44,29 +44,83 @@ def ya_procesado(message_id):
         return cur.rowcount == 0
 
 
-def get_historial(telefono):
+def get_cuenta_by_phone_number_id(phone_number_id):
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute(
-            "SELECT historial FROM conversaciones WHERE telefono = %s", (telefono,)
+            """
+            SELECT id, nombre_cliente, phone_number_id, whatsapp_token, verify_token, waba_id
+            FROM cuentas
+            WHERE phone_number_id = %s AND activo = true
+            """,
+            (phone_number_id,),
+        )
+        row = cur.fetchone()
+        if not row:
+            return None
+        return {
+            "id": row[0],
+            "nombre_cliente": row[1],
+            "phone_number_id": row[2],
+            "whatsapp_token": row[3],
+            "verify_token": row[4],
+            "waba_id": row[5],
+        }
+
+
+def get_or_create_conversacion(cuenta_id, telefono):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT id FROM conversaciones WHERE cuenta_id = %s AND telefono = %s",
+            (cuenta_id, telefono),
+        )
+        row = cur.fetchone()
+        if row:
+            return row[0]
+        cur.execute(
+            "INSERT INTO conversaciones (cuenta_id, telefono) VALUES (%s, %s) RETURNING id",
+            (cuenta_id, telefono),
+        )
+        return cur.fetchone()[0]
+
+
+def registrar_mensaje(conversacion_id, direccion, contenido, wa_message_id=None, tipo="texto"):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO mensajes (conversacion_id, direccion, tipo, contenido, wa_message_id)
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (conversacion_id, direccion, tipo, contenido, wa_message_id),
+        )
+
+
+def get_historial(cuenta_id, telefono):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT historial FROM conversaciones WHERE cuenta_id = %s AND telefono = %s",
+            (cuenta_id, telefono),
         )
         row = cur.fetchone()
         return row[0] if row else []
 
 
-def guardar_historial(telefono, historial):
+def guardar_historial(cuenta_id, telefono, historial):
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute(
             """
-            INSERT INTO conversaciones (telefono, historial)
-            VALUES (%s, %s)
-            ON CONFLICT (telefono)
+            INSERT INTO conversaciones (cuenta_id, telefono, historial)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (cuenta_id, telefono)
             DO UPDATE SET historial = EXCLUDED.historial, ultimo_mensaje = now()
             """,
-            (telefono, Json(historial)),
+            (cuenta_id, telefono, Json(historial)),
         )
 
 
-def borrar_historial(telefono):
+def borrar_historial(cuenta_id, telefono):
     with get_conn() as conn, conn.cursor() as cur:
-        cur.execute("DELETE FROM conversaciones WHERE telefono = %s", (telefono,))
+        cur.execute(
+            "DELETE FROM conversaciones WHERE cuenta_id = %s AND telefono = %s",
+            (cuenta_id, telefono),
+        )
         return cur.rowcount > 0
