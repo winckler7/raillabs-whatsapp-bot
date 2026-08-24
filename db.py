@@ -116,7 +116,8 @@ def get_conversacion(conversacion_id):
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute(
             """
-            SELECT id, cuenta_id, telefono, estado, modo, notas, nombre, primer_contacto, ultimo_mensaje
+            SELECT id, cuenta_id, telefono, estado, modo, notas, nombre, archivada,
+                   primer_contacto, ultimo_mensaje
             FROM conversaciones WHERE id = %s
             """,
             (conversacion_id,),
@@ -125,18 +126,20 @@ def get_conversacion(conversacion_id):
         if not row:
             return None
         columnas = [
-            "id", "cuenta_id", "telefono", "estado", "modo", "notas", "nombre",
+            "id", "cuenta_id", "telefono", "estado", "modo", "notas", "nombre", "archivada",
             "primer_contacto", "ultimo_mensaje",
         ]
-        return dict(zip(columnas, row))
+        detalle = dict(zip(columnas, row))
+        detalle["etiquetas"] = get_etiquetas_conversacion(conversacion_id)
+        return detalle
 
 
-def listar_conversaciones(cuenta_id):
+def listar_conversaciones(cuenta_id, archivadas=False):
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute(
             """
             SELECT
-                c.id, c.telefono, c.estado, c.modo, c.nombre, c.ultimo_mensaje,
+                c.id, c.telefono, c.estado, c.modo, c.nombre, c.ultimo_mensaje, c.archivada,
                 (
                     SELECT contenido FROM mensajes m
                     WHERE m.conversacion_id = c.id
@@ -147,42 +150,192 @@ def listar_conversaciones(cuenta_id):
                     WHERE m.conversacion_id = c.id
                       AND m.direccion = 'entrante'
                       AND (c.visto_en IS NULL OR m.creado_en > c.visto_en)
-                ) AS no_leidos
+                ) AS no_leidos,
+                COALESCE((
+                    SELECT json_agg(json_build_object('id', e.id, 'nombre', e.nombre, 'color', e.color))
+                    FROM conversacion_etiquetas ce JOIN etiquetas e ON e.id = ce.etiqueta_id
+                    WHERE ce.conversacion_id = c.id
+                ), '[]') AS etiquetas
             FROM conversaciones c
-            WHERE c.cuenta_id = %s
+            WHERE c.cuenta_id = %s AND c.archivada = %s
             ORDER BY c.ultimo_mensaje DESC
             """,
-            (cuenta_id,),
+            (cuenta_id, archivadas),
         )
         columnas = [
-            "id", "telefono", "estado", "modo", "nombre", "ultimo_mensaje",
-            "ultimo_texto", "no_leidos",
+            "id", "telefono", "estado", "modo", "nombre", "ultimo_mensaje", "archivada",
+            "ultimo_texto", "no_leidos", "etiquetas",
         ]
         return [dict(zip(columnas, row)) for row in cur.fetchall()]
 
 
 def get_mensajes(conversacion_id, after_id=None):
     with get_conn() as conn, conn.cursor() as cur:
-        if after_id:
-            cur.execute(
-                """
-                SELECT id, direccion, tipo, contenido, estado_entrega, creado_en
-                FROM mensajes WHERE conversacion_id = %s AND id > %s
-                ORDER BY id ASC
-                """,
-                (conversacion_id, after_id),
-            )
-        else:
-            cur.execute(
-                """
-                SELECT id, direccion, tipo, contenido, estado_entrega, creado_en
-                FROM mensajes WHERE conversacion_id = %s
-                ORDER BY id ASC
-                """,
-                (conversacion_id,),
-            )
-        columnas = ["id", "direccion", "tipo", "contenido", "estado_entrega", "creado_en"]
+        condicion = "AND id > %s" if after_id else ""
+        params = (conversacion_id, after_id) if after_id else (conversacion_id,)
+        cur.execute(
+            f"""
+            SELECT m.id, m.direccion, m.tipo, m.contenido, m.estado_entrega, m.creado_en,
+                   EXISTS(SELECT 1 FROM medios med WHERE med.mensaje_id = m.id) AS tiene_media
+            FROM mensajes m WHERE conversacion_id = %s {condicion}
+            ORDER BY id ASC
+            """,
+            params,
+        )
+        columnas = [
+            "id", "direccion", "tipo", "contenido", "estado_entrega", "creado_en", "tiene_media",
+        ]
         return [dict(zip(columnas, row)) for row in cur.fetchall()]
+
+
+def get_estados_salientes(conversacion_id, limit=30):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT id, estado_entrega FROM mensajes
+            WHERE conversacion_id = %s AND direccion = 'saliente'
+            ORDER BY id DESC LIMIT %s
+            """,
+            (conversacion_id, limit),
+        )
+        return {r[0]: r[1] for r in cur.fetchall()}
+
+
+RANGO_ESTADO_ENTREGA = {"enviado": 1, "entregado": 2, "leido": 3}
+TRADUCCION_ESTADO_META = {
+    "sent": "enviado",
+    "delivered": "entregado",
+    "read": "leido",
+    "failed": "fallido",
+}
+
+
+def actualizar_estado_entrega(wa_message_id, estado_meta):
+    # Meta puede reentregar el mismo status varias veces, y a veces fuera de
+    # orden -- no se baja de nivel (ej. no pisar "leido" con "entregado" si
+    # llega tarde), salvo "fallido" que siempre se aplica.
+    estado = TRADUCCION_ESTADO_META.get(estado_meta)
+    if not estado or not wa_message_id:
+        return
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT id, estado_entrega FROM mensajes WHERE wa_message_id = %s", (wa_message_id,)
+        )
+        row = cur.fetchone()
+        if not row:
+            return
+        mensaje_id, actual = row
+        if estado == "fallido" or RANGO_ESTADO_ENTREGA.get(estado, 0) >= RANGO_ESTADO_ENTREGA.get(actual, 0):
+            cur.execute("UPDATE mensajes SET estado_entrega = %s WHERE id = %s", (estado, mensaje_id))
+
+
+def registrar_mensaje_con_media(
+    conversacion_id, direccion, contenido, tipo, media_bytes, mime_type, wa_message_id=None
+):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO mensajes (conversacion_id, direccion, tipo, contenido, wa_message_id)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING id
+            """,
+            (conversacion_id, direccion, tipo, contenido, wa_message_id),
+        )
+        mensaje_id = cur.fetchone()[0]
+        cur.execute(
+            "INSERT INTO medios (mensaje_id, mime_type, contenido) VALUES (%s, %s, %s)",
+            (mensaje_id, mime_type, psycopg2.Binary(media_bytes)),
+        )
+        return mensaje_id
+
+
+def get_media(mensaje_id):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT mime_type, contenido FROM medios WHERE mensaje_id = %s", (mensaje_id,))
+        row = cur.fetchone()
+        if not row:
+            return None
+        return {"mime_type": row[0], "contenido": bytes(row[1])}
+
+
+def set_archivada(conversacion_id, archivada):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            "UPDATE conversaciones SET archivada = %s WHERE id = %s", (archivada, conversacion_id)
+        )
+
+
+def listar_plantillas(cuenta_id):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT id, texto FROM plantillas WHERE cuenta_id = %s ORDER BY orden, id", (cuenta_id,)
+        )
+        return [{"id": r[0], "texto": r[1]} for r in cur.fetchall()]
+
+
+def crear_plantilla(cuenta_id, texto):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO plantillas (cuenta_id, texto) VALUES (%s, %s) RETURNING id",
+            (cuenta_id, texto),
+        )
+        return cur.fetchone()[0]
+
+
+def borrar_plantilla(plantilla_id):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("DELETE FROM plantillas WHERE id = %s", (plantilla_id,))
+
+
+def listar_etiquetas(cuenta_id):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT id, nombre, color FROM etiquetas WHERE cuenta_id = %s ORDER BY nombre",
+            (cuenta_id,),
+        )
+        return [{"id": r[0], "nombre": r[1], "color": r[2]} for r in cur.fetchall()]
+
+
+def crear_etiqueta(cuenta_id, nombre, color="#667781"):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO etiquetas (cuenta_id, nombre, color) VALUES (%s, %s, %s)
+            ON CONFLICT (cuenta_id, nombre) DO UPDATE SET color = EXCLUDED.color
+            RETURNING id
+            """,
+            (cuenta_id, nombre, color),
+        )
+        return cur.fetchone()[0]
+
+
+def borrar_etiqueta(etiqueta_id):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("DELETE FROM etiquetas WHERE id = %s", (etiqueta_id,))
+
+
+def get_etiquetas_conversacion(conversacion_id):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT e.id, e.nombre, e.color FROM etiquetas e
+            JOIN conversacion_etiquetas ce ON ce.etiqueta_id = e.id
+            WHERE ce.conversacion_id = %s
+            ORDER BY e.nombre
+            """,
+            (conversacion_id,),
+        )
+        return [{"id": r[0], "nombre": r[1], "color": r[2]} for r in cur.fetchall()]
+
+
+def set_etiquetas_conversacion(conversacion_id, etiqueta_ids):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("DELETE FROM conversacion_etiquetas WHERE conversacion_id = %s", (conversacion_id,))
+        for etiqueta_id in etiqueta_ids:
+            cur.execute(
+                "INSERT INTO conversacion_etiquetas (conversacion_id, etiqueta_id) VALUES (%s, %s)",
+                (conversacion_id, etiqueta_id),
+            )
 
 
 def marcar_visto(conversacion_id):

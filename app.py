@@ -16,10 +16,14 @@ from db import (
     get_cuenta_by_phone_number_id,
     get_or_create_conversacion,
     registrar_mensaje,
+    registrar_mensaje_con_media,
     set_nombre_automatico,
+    actualizar_estado_entrega,
 )
-from graph_api import send_message
+from graph_api import send_message, obtener_media_url, descargar_media
 from panel import panel_bp
+
+TIPOS_MEDIA = {"image", "audio", "video", "document", "sticker"}
 
 app = Flask(__name__)
 app.secret_key = os.environ["FLASK_SECRET_KEY"]
@@ -62,9 +66,21 @@ def receive_message():
 
     try:
         value = data["entry"][0]["changes"][0]["value"]
-        message = value["messages"][0]
     except (KeyError, IndexError, TypeError):
-        # No es un mensaje nuevo (p. ej. es un "status update"): lo ignoramos.
+        return jsonify(status="ignored"), 200
+
+    if "statuses" in value:
+        # Confirmaciones de entrega/lectura de mensajes que ya mandamos --
+        # no son mensajes nuevos, se procesan aparte y siempre son idempotentes
+        # (actualizar_estado_entrega nunca baja de nivel un estado).
+        for status in value["statuses"]:
+            actualizar_estado_entrega(status.get("id"), status.get("status"))
+        return jsonify(status="estado_actualizado"), 200
+
+    try:
+        message = value["messages"][0]
+    except (KeyError, IndexError):
+        # No es un mensaje nuevo ni un status conocido: lo ignoramos.
         return jsonify(status="ignored"), 200
 
     if ya_procesado(message["id"]):
@@ -91,14 +107,38 @@ def receive_message():
     if nombre_perfil:
         set_nombre_automatico(conversacion_id, nombre_perfil)
 
-    if message.get("type") != "text":
-        # Por ahora solo entendemos texto -- avisamos en vez de dejar al
-        # cliente sin respuesta (las notas de voz son muy comunes en WhatsApp),
-        # a menos que un humano ya haya tomado el control desde el panel.
+    tipo_mensaje = message.get("type")
+
+    if tipo_mensaje in TIPOS_MEDIA:
+        # Se descarga y guarda para que quede visible en el panel -- el bot
+        # sigue sin "entender" el contenido, solo avisa que por ahora
+        # necesita texto (igual que con cualquier otro tipo no soportado).
+        media_info = message.get(tipo_mensaje, {})
+        media_id = media_info.get("id")
+        caption = media_info.get("caption") or f"[{tipo_mensaje}]"
+        try:
+            url = obtener_media_url(media_id, cuenta["whatsapp_token"])
+            contenido_bytes, mime_type = descargar_media(url, cuenta["whatsapp_token"])
+            registrar_mensaje_con_media(
+                conversacion_id, "entrante", caption, tipo_mensaje,
+                contenido_bytes, mime_type, wa_message_id=message["id"],
+            )
+        except Exception as e:
+            print(f"Error descargando media de WhatsApp: {e}", flush=True)
+            registrar_mensaje(conversacion_id, "entrante", caption, wa_message_id=message["id"], tipo=tipo_mensaje)
+
         if conversacion["modo"] == "bot":
             respuesta = "Por ahora solo puedo leer mensajes de texto, ¿me lo escribes con palabras? 🙏"
-            registrar_mensaje(conversacion_id, "saliente", respuesta)
-            send_message(cuenta, sender, respuesta)
+            wa_id = send_message(cuenta, sender, respuesta)
+            registrar_mensaje(conversacion_id, "saliente", respuesta, wa_message_id=wa_id)
+        return jsonify(status="media_recibido"), 200
+
+    if tipo_mensaje != "text":
+        # Otros tipos no soportados (ubicación, contacto, reacción, etc.).
+        if conversacion["modo"] == "bot":
+            respuesta = "Por ahora solo puedo leer mensajes de texto, ¿me lo escribes con palabras? 🙏"
+            wa_id = send_message(cuenta, sender, respuesta)
+            registrar_mensaje(conversacion_id, "saliente", respuesta, wa_message_id=wa_id)
         return jsonify(status="ignored"), 200
 
     text = message["text"]["body"]
@@ -124,9 +164,8 @@ def receive_message():
     respuesta = chat(messages)
     add_assistant_message(messages, respuesta)
     guardar_historial(cuenta["id"], sender, messages)
-    registrar_mensaje(conversacion_id, "saliente", respuesta)
-
-    send_message(cuenta, sender, respuesta)
+    wa_id = send_message(cuenta, sender, respuesta)
+    registrar_mensaje(conversacion_id, "saliente", respuesta, wa_message_id=wa_id)
 
     return jsonify(status="ok"), 200
 

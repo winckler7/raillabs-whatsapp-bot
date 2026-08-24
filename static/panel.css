@@ -103,6 +103,51 @@ body {
     color: #667781;
 }
 
+#tabs-buzon {
+    display: flex;
+    gap: 4px;
+    padding: 8px 12px 0;
+}
+
+.tab-buzon {
+    flex: 1;
+    padding: 6px 8px;
+    border: none;
+    background: #f0f2f5;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #667781;
+}
+
+.tab-buzon.activo {
+    background: #d1f2e8;
+    color: #007a5a;
+    font-weight: 600;
+}
+
+#filtro-etiquetas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px 12px 0;
+}
+
+.chip-etiqueta {
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    color: #fff;
+}
+
+.chip-etiqueta.inactivo {
+    background: transparent !important;
+    color: #667781 !important;
+    border-color: #d1d7db;
+}
+
 #buscador-wrap {
     padding: 8px 12px;
 }
@@ -158,6 +203,27 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 220px;
+}
+
+.conv-etiquetas {
+    display: flex;
+    gap: 3px;
+    margin-top: 2px;
+}
+
+.conv-etiquetas .punto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.conv-archivar {
+    border: none;
+    background: transparent;
+    color: #667781;
+    cursor: pointer;
+    font-size: 13px;
 }
 
 .conv-side {
@@ -266,6 +332,16 @@ body {
     color: #667781;
 }
 
+#etiquetas-conversacion {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+#etiquetas-conversacion .chip-etiqueta {
+    cursor: default;
+}
+
 #controles {
     display: flex;
     gap: 8px;
@@ -285,6 +361,15 @@ body {
     background: #d9534f;
     color: #fff;
     border-color: #d9534f;
+}
+
+#btn-archivar::before {
+    content: "🗄";
+}
+
+#btn-archivar.archivada {
+    background: #ffe08a;
+    border-color: #ffe08a;
 }
 
 #btn-modo.bot {
@@ -320,6 +405,31 @@ body {
     cursor: pointer;
 }
 
+#panel-etiquetas {
+    background: #fff;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #d1d7db;
+}
+
+#etiquetas-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex: 1;
+}
+
+#btn-nueva-etiqueta {
+    border: none;
+    background: transparent;
+    color: #00a884;
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
 #mensajes {
     flex: 1;
     overflow-y: auto;
@@ -347,6 +457,47 @@ body {
     margin-top: 2px;
 }
 
+.tick {
+    margin-left: 4px;
+    color: #8696a0;
+    font-size: 11px;
+}
+
+.tick-leido {
+    color: #53bdeb;
+}
+
+.tick-fallido {
+    color: #d9534f;
+}
+
+.media-imagen {
+    max-width: 260px;
+    max-height: 260px;
+    border-radius: 6px;
+    display: block;
+    cursor: pointer;
+    margin-bottom: 4px;
+}
+
+.media-audio, .media-video {
+    max-width: 260px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.media-documento {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 6px;
+    margin-bottom: 4px;
+    text-decoration: none;
+    color: inherit;
+}
+
 .burbuja.entrante {
     background: #fff;
     align-self: flex-start;
@@ -359,11 +510,46 @@ body {
     border-top-right-radius: 0;
 }
 
+#plantillas-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 16px 0;
+    background: #f0f2f5;
+}
+
+.chip-plantilla {
+    padding: 4px 10px;
+    border-radius: 14px;
+    border: 1px solid #d1d7db;
+    background: #fff;
+    font-size: 12px;
+    cursor: pointer;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chip-plantilla.gestionar {
+    color: #d9534f;
+    border-color: #d9534f;
+}
+
 #form-responder {
     display: flex;
     gap: 8px;
     padding: 10px 16px;
     background: #f0f2f5;
+    align-items: flex-end;
+}
+
+#btn-adjuntar {
+    border: none;
+    background: transparent;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 4px;
 }
 
 #texto-respuesta {

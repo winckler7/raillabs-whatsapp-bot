@@ -23,6 +23,7 @@ def run():
             migrar_pk_conversaciones(cur, cuenta_id)
             crear_tabla_mensajes(cur)
             backfill_mensajes(cur)
+            crear_tablas_fase3(cur)
         conn.commit()
         print(f"Migración completa. cuenta_id de RailLabs = {cuenta_id}")
     except Exception:
@@ -163,6 +164,57 @@ def backfill_mensajes(cur):
                 """,
                 (conversacion_id, direccion, mensaje.get("content", ""), ts),
             )
+
+
+def crear_tablas_fase3(cur):
+    # Archivar, multimedia, respuestas rápidas y etiquetas/buzones -- todas
+    # referencian tablas que ya tienen su PK definitiva desde antes, así que
+    # no hay problema de orden como con `mensajes` en la migración original.
+    cur.execute(
+        "ALTER TABLE conversaciones ADD COLUMN IF NOT EXISTS archivada BOOLEAN NOT NULL DEFAULT false"
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS medios (
+            id SERIAL PRIMARY KEY,
+            mensaje_id INTEGER NOT NULL REFERENCES mensajes(id) ON DELETE CASCADE,
+            mime_type TEXT NOT NULL,
+            contenido BYTEA NOT NULL,
+            creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS plantillas (
+            id SERIAL PRIMARY KEY,
+            cuenta_id INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+            texto TEXT NOT NULL,
+            orden INTEGER NOT NULL DEFAULT 0,
+            creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS etiquetas (
+            id SERIAL PRIMARY KEY,
+            cuenta_id INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+            nombre TEXT NOT NULL,
+            color TEXT NOT NULL DEFAULT '#667781',
+            UNIQUE (cuenta_id, nombre)
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS conversacion_etiquetas (
+            conversacion_id INTEGER NOT NULL REFERENCES conversaciones(id) ON DELETE CASCADE,
+            etiqueta_id INTEGER NOT NULL REFERENCES etiquetas(id) ON DELETE CASCADE,
+            PRIMARY KEY (conversacion_id, etiqueta_id)
+        )
+        """
+    )
 
 
 if __name__ == "__main__":
