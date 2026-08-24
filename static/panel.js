@@ -313,7 +313,8 @@ function renderMensaje(m) {
     div.dataset.id = m.id;
 
     const mediaHtml = m.tiene_media ? renderMedia(m) : "";
-    const mostrarTexto = !m.tiene_media || m.tipo !== "document";
+    const esPlaceholder = /^\[(image|audio|video|document|sticker)\]$/.test(m.contenido);
+    const mostrarTexto = m.tiene_media ? m.tipo !== "document" && !esPlaceholder : true;
     const texto = mostrarTexto ? escapeHtml(m.contenido) : "";
     const ticks = m.direccion === "saliente" ? `<span class="ticks">${iconoTicks(m.estado_entrega)}</span>` : "";
 
