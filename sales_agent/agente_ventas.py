@@ -19,7 +19,7 @@ TOOLS = [
         "name": "consultar_disponibilidad",
         "description": (
             "Devuelve los próximos horarios disponibles para agendar una "
-            "llamada con Jorge (lunes a viernes, 9:00-11:00 y 17:00-18:00, "
+            "llamada con Jorge, dueño de RailLabs (lunes a viernes, 9:00-11:00 y 17:00-18:00, "
             "hora de Ciudad de México). Úsala antes de ofrecerle horarios "
             "concretos al cliente -- nunca inventes ni asumas horarios libres."
         ),

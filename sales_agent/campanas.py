@@ -51,11 +51,9 @@ antes de completarlos:
    mensajes por WhatsApp y no se dan abasto respondiendo a tiempo.
    Menciónale los requisitos: (a) un número de teléfono dedicado que se
    pueda vincular a la API de WhatsApp Business y que actualmente NO esté
-   registrado en WhatsApp -- ni normal ni Business (si su número principal
-   ya lo usan, van a necesitar un número nuevo solo para el bot); y (b)
-   contar con una página de Facebook con Meta Business Suite optimizado y
-   una cuenta de WhatsApp Business (si no los tiene, lo ayudamos a
-   configurarlos antes de instalar el agente).
+   registrado en WhatsApp; y (b) contar con una página de Facebook con 
+   Meta Business Suite optimizado y una cuenta de WhatsApp Business 
+   (si no los tiene, lo ayudamos a configurarlos antes de instalar el agente).
 2. Situación actual: pregúntale a qué se dedica su negocio, cómo maneja
    hoy los mensajes de WhatsApp (¿alguien contesta manualmente? ¿se le van
    leads por no responder a tiempo?), y qué lo trae a escribirnos.
@@ -85,9 +83,8 @@ antes de completarlos:
    sienten que su imagen no refleja su nivel profesional. No hay
    requisitos técnicos de su parte -- solo que nos compartan su
    información de marca actual si ya tienen algo.
-2. Situación actual: pregúntale sobre su despacho -- nombre, área de
-   práctica (civil, penal, corporativo, etc.), y si ya tiene logo o
-   identidad de marca actualmente.
+2. Situación actual: pregúntale sobre los problemas que está teniendo con
+   su imagen actual y por qué le interesa cambiarla.
 3. Situación deseada: si no te lo dijo ya, pregúntale a qué le gustaría
    llegar con su imagen -- ¿verse más establecido/premium, tener
    consistencia en toda su papelería, atraer clientes de mayor nivel, o
@@ -114,12 +111,10 @@ antes de completarlos:
    presupuesto de publicidad aproximado).
 2. Situación actual: pregúntale (una o dos preguntas a la vez, no todas de
    golpe) si ya corre anuncios o está por lanzar una campaña nueva, y si
-   ya corre, qué resultados ha visto hasta ahora (costo por lead, clientes
-   cerrados).
-3. Situación deseada: si no te lo dijo ya, pregúntale a qué le gustaría
-   llegar -- ¿bajar su costo por lead, tener un flujo constante de
-   prospectos, dejar de depender de referidos, o validar que una campaña
-   nueva sea rentable antes de lanzarla?
+   ya corre, si se siente a gusto con los resultados adquiridos.
+3. Situación deseada: si no te lo dijo ya, pregúntale cuál es el objetivo
+   que tiene con la campaña -- cuántas ventas o leads le gustaría conseguir
+   al mes.
 4. {PASO_TRANSICION_JORGE}
 5. {PASO_AGENDADO}
 """
