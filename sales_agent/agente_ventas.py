@@ -46,7 +46,11 @@ TOOLS = [
                 },
                 "nombre_cliente": {
                     "type": "string",
-                    "description": "Nombre del cliente, si lo dio. Si no lo sabes, usa 'Cliente de WhatsApp'.",
+                    "description": "Nombre real del cliente. Es obligatorio pedírselo antes de agendar si todavía no lo sabes -- nunca uses un nombre genérico ni inventado.",
+                },
+                "correo_cliente": {
+                    "type": "string",
+                    "description": "Correo del cliente, solo si lo dio voluntariamente al preguntarle si quiere la invitación por correo. Es opcional -- si no lo dio, omite este campo por completo, no insistas ni lo pidas como requisito.",
                 },
                 "resumen": {
                     "type": "string",
@@ -58,7 +62,7 @@ TOOLS = [
                     ),
                 },
             },
-            "required": ["inicio_iso", "resumen"],
+            "required": ["inicio_iso", "nombre_cliente", "resumen"],
         },
     },
 ]
@@ -80,8 +84,9 @@ def _ejecutar_tool(nombre, input_, cuenta, sender, conversacion_id):
 
     if nombre == "agendar_cita":
         nombre_cliente = input_.get("nombre_cliente") or "Cliente de WhatsApp"
+        correo_cliente = input_.get("correo_cliente")
         resultado = calendario.crear_evento(
-            input_["inicio_iso"], nombre_cliente, sender, input_["resumen"]
+            input_["inicio_iso"], nombre_cliente, sender, input_["resumen"], correo_cliente
         )
         if resultado["ok"]:
             # Se registra en la DB en vez de avisar por WhatsApp al momento --
@@ -94,7 +99,7 @@ def _ejecutar_tool(nombre, input_, cuenta, sender, conversacion_id):
                 from db import registrar_cita
                 registrar_cita(
                     cuenta["id"], conversacion_id, sender, nombre_cliente,
-                    input_["inicio_iso"], input_["resumen"],
+                    input_["inicio_iso"], input_["resumen"], correo_cliente,
                 )
             except Exception as e:
                 print(f"Error registrando cita en la base de datos: {e}", flush=True)

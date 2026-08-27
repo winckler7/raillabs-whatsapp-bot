@@ -55,8 +55,9 @@ def _formatear_resumen_del_dia(datos):
         for i, cita in enumerate(datos["citas"], start=1):
             inicio_local = cita["inicio"].astimezone(ZONA)
             nombre = cita["nombre_cliente"] or "Cliente de WhatsApp"
+            contacto = f"{cita['telefono']}, {cita['correo']}" if cita.get("correo") else cita["telefono"]
             lineas.append(
-                f"\n{i}. {nombre} ({cita['telefono']}) - {formato_legible(inicio_local)}\n   {cita['resumen']}"
+                f"\n{i}. {nombre} ({contacto}) - {formato_legible(inicio_local)}\n   {cita['resumen']}"
             )
     return "\n".join(lineas)
 

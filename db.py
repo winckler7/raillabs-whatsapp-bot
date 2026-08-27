@@ -42,12 +42,16 @@ def init_db():
                 conversacion_id INTEGER REFERENCES conversaciones(id) ON DELETE SET NULL,
                 telefono TEXT NOT NULL,
                 nombre_cliente TEXT,
+                correo TEXT,
                 inicio TIMESTAMPTZ NOT NULL,
                 resumen TEXT NOT NULL,
                 creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
             )
             """
         )
+        # ALTER de respaldo para cuando la tabla ya existía antes de agregar
+        # `correo` (CREATE TABLE IF NOT EXISTS de arriba no la actualiza).
+        cur.execute("ALTER TABLE citas ADD COLUMN IF NOT EXISTS correo TEXT")
 
 
 def ya_procesado(message_id):
@@ -445,14 +449,14 @@ def borrar_historial(cuenta_id, telefono):
         return cur.rowcount > 0
 
 
-def registrar_cita(cuenta_id, conversacion_id, telefono, nombre_cliente, inicio, resumen):
+def registrar_cita(cuenta_id, conversacion_id, telefono, nombre_cliente, inicio, resumen, correo=None):
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute(
             """
-            INSERT INTO citas (cuenta_id, conversacion_id, telefono, nombre_cliente, inicio, resumen)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO citas (cuenta_id, conversacion_id, telefono, nombre_cliente, correo, inicio, resumen)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             """,
-            (cuenta_id, conversacion_id, telefono, nombre_cliente, inicio, resumen),
+            (cuenta_id, conversacion_id, telefono, nombre_cliente, correo, inicio, resumen),
         )
 
 
@@ -476,14 +480,14 @@ def resumen_del_dia(cuenta_id):
 
         cur.execute(
             """
-            SELECT telefono, nombre_cliente, inicio, resumen FROM citas
+            SELECT telefono, nombre_cliente, correo, inicio, resumen FROM citas
             WHERE cuenta_id = %s AND creado_en >= %s AND creado_en < %s
             ORDER BY inicio
             """,
             (cuenta_id, inicio_dia, fin_dia),
         )
         citas = [
-            {"telefono": r[0], "nombre_cliente": r[1], "inicio": r[2], "resumen": r[3]}
+            {"telefono": r[0], "nombre_cliente": r[1], "correo": r[2], "inicio": r[3], "resumen": r[4]}
             for r in cur.fetchall()
         ]
 
