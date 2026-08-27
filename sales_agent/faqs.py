@@ -47,10 +47,15 @@ para WhatsApp Business, y los datos que el agente recopila (nombre, interés,
 disponibilidad) solo se usan para el proceso de venta y agendado.
 
 P: ¿El precio es único pago o mensualidad?
-R: El precio base ($7,000 MXN) corresponde a la instalación e implementación
-inicial. Dependiendo de las tecnologías extra que agregues (CRM, sitio web,
-volumen de conversaciones) puede haber un costo de mantenimiento mensual —
-esto se cotiza según cada caso.
+R: Depende del alcance de tu proyecto (tecnologías que agregues, volumen de
+conversaciones, si necesitas mantenimiento mensual) -- Jorge te da el
+precio exacto en la llamada, una vez que conoce mejor tu caso.
+
+P: ¿Puedo usar el número de WhatsApp que ya tengo?
+R: No -- la API de WhatsApp Business necesita un número que no esté
+registrado en WhatsApp (ni normal ni Business) al momento de conectarlo.
+Si tu número actual ya lo usas para hablar con clientes, vas a necesitar un
+número nuevo dedicado para el bot -- te ayudamos a configurarlo.
 
 P: No tengo página de Facebook ni WhatsApp Business todavía, ¿qué hago?
 R: No hay problema, podemos ayudarte a configurarlos desde cero antes de
