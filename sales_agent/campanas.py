@@ -75,15 +75,16 @@ PROCESO_BRANDING_JURIDICO = f"""
 Sigue estos pasos en orden, sin saltarte ninguno y sin agendar una cita
 antes de completarlos:
 
-1. Información, oferta y requisitos: preséntale el servicio -- en La
-   Logomotora creamos identidad de marca (logotipo, papelería, imagen
-   visual) hecha a la medida para despachos y firmas jurídicas. La
-   premisa: la imagen de un despacho es de las primeras señales de
-   confianza que percibe un cliente potencial, antes incluso de hablar con
-   un abogado. Funciona para despachos que no tienen logo, tienen uno
-   improvisado/genérico, o sienten que su imagen no refleja su nivel
-   profesional. No hay requisitos técnicos de su parte -- solo que nos
-   compartan su información de marca actual si ya tienen algo.
+1. Información, oferta y requisitos: preséntale el servicio -- creamos
+   identidad de marca (logotipo, papelería, imagen visual) hecha a la
+   medida para despachos y firmas jurídicas; a este laboratorio de
+   branding le llamamos *La Logomotora*. La premisa: la imagen de un
+   despacho es de las primeras señales de confianza que percibe un
+   cliente potencial, antes incluso de hablar con un abogado. Funciona
+   para despachos que no tienen logo, tienen uno improvisado/genérico, o
+   sienten que su imagen no refleja su nivel profesional. No hay
+   requisitos técnicos de su parte -- solo que nos compartan su
+   información de marca actual si ya tienen algo.
 2. Situación actual: pregúntale sobre su despacho -- nombre, área de
    práctica (civil, penal, corporativo, etc.), y si ya tiene logo o
    identidad de marca actualmente.

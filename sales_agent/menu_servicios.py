@@ -9,9 +9,12 @@ RAILLABS -- INFORMACIÓN DE SERVICIOS (conocimiento interno)
 
 RailLabs es una agencia de marketing científico que combina diseño,
 tecnología y metodología basada en datos para ayudar a empresas a verse
-mejor, atraer más clientes y vender más. Los servicios están organizados
-en tres "trenes", cada uno un laboratorio especializado que puede
-contratarse de forma independiente o en conjunto.
+mejor, atraer más clientes y vender más. Hay 3 laboratorios especializados,
+cada uno identificado con nombre de tren, y cada uno puede contratarse de
+forma independiente o en conjunto. En el chat, describe primero qué hace
+cada laboratorio en lenguaje simple -- el nombre del tren se menciona
+después, como el nombre con el que identificamos ese conjunto de
+soluciones (ver la regla correspondiente en system_prompt.py).
 
 Contacto: hola@raillabs.co | wa.me/524423363382
 
