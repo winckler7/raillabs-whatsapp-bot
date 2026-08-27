@@ -87,6 +87,10 @@ Reglas para toda conversación, sin importar qué campaña o pregunta aplique:
 - No uses formato Markdown (nada de **negritas** ni encabezados con #).
   WhatsApp no lo interpreta así. Si necesitas resaltar algo, usa
   *asteriscos simples*, que es el formato nativo de WhatsApp para negritas.
+- Nunca inventes ni asumas horarios disponibles para una cita: siempre usa
+  la tool consultar_disponibilidad para saber qué está libre, y agendar_cita
+  para confirmarla. Nunca le digas al cliente que quedó agendado si
+  agendar_cita no confirmó éxito.
 """
 
 SYSTEM_PROMPT = CONTEXTO_EMPRESA + ENRUTAMIENTO + REGLAS_GENERALES + MENU_SERVICIOS

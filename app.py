@@ -19,9 +19,11 @@ from db import (
     registrar_mensaje_con_media,
     set_nombre_automatico,
     actualizar_estado_entrega,
+    resumen_del_dia,
 )
 from graph_api import send_message, obtener_media_url, descargar_media
 from panel import panel_bp
+from calendario import formato_legible, ZONA
 
 TIPOS_MEDIA = {"image", "audio", "video", "document", "sticker"}
 
@@ -35,6 +37,28 @@ init_db()
 # -- las credenciales de envío (token, phone_number_id) sí son por cuenta y
 # se buscan en la tabla `cuentas` con get_cuenta_by_phone_number_id().
 VERIFY_TOKEN = os.environ["VERIFY_TOKEN"]
+
+# Número del dueño (Jorge) para el comando "RESUMEN DEL DÍA" -- opcional: si
+# no está configurado, ese comando simplemente no se activa para nadie.
+OWNER_WHATSAPP_NUMBER = os.environ.get("OWNER_WHATSAPP_NUMBER")
+COMANDOS_RESUMEN_DIA = {"RESUMEN DEL DIA", "RESUMEN DEL DÍA"}
+
+
+def _formatear_resumen_del_dia(datos):
+    lineas = [
+        "📊 Resumen del día",
+        f"🆕 Contactos nuevos: {datos['contactos_nuevos']}",
+        f"📅 Citas agendadas: {len(datos['citas'])}",
+    ]
+    if datos["citas"]:
+        lineas.append("\nDetalle de citas:")
+        for i, cita in enumerate(datos["citas"], start=1):
+            inicio_local = cita["inicio"].astimezone(ZONA)
+            nombre = cita["nombre_cliente"] or "Cliente de WhatsApp"
+            lineas.append(
+                f"\n{i}. {nombre} ({cita['telefono']}) - {formato_legible(inicio_local)}\n   {cita['resumen']}"
+            )
+    return "\n".join(lineas)
 
 
 def normalize_mx_number(number):
@@ -154,6 +178,15 @@ def receive_message():
         send_message(cuenta, sender, "Listo, borramos tu historial de conversación con nosotros. Si nos vuelves a escribir, empezamos desde cero. 🙏")
         return jsonify(status="borrado"), 200
 
+    if sender == OWNER_WHATSAPP_NUMBER and text.strip().upper() in COMANDOS_RESUMEN_DIA:
+        # Comando del dueño, no pasa por el agente de ventas -- lo inicia él
+        # mismo, así que sí cae dentro de la ventana de 24h de Meta (a
+        # diferencia de un aviso "empujado" por el bot al agendar una cita).
+        respuesta = _formatear_resumen_del_dia(resumen_del_dia(cuenta["id"]))
+        wa_id = send_message(cuenta, sender, respuesta)
+        registrar_mensaje(conversacion_id, "saliente", respuesta, wa_message_id=wa_id)
+        return jsonify(status="resumen_enviado"), 200
+
     if conversacion["modo"] == "humano":
         # Un humano tomó el control de esta conversación desde el panel --
         # el mensaje ya quedó registrado arriba, pero el bot no responde.
@@ -161,7 +194,7 @@ def receive_message():
 
     messages = get_historial(cuenta["id"], sender)
     add_user_message(messages, text)
-    respuesta = chat(messages)
+    respuesta = chat(messages, cuenta, sender, conversacion_id)
     add_assistant_message(messages, respuesta)
     guardar_historial(cuenta["id"], sender, messages)
     wa_id = send_message(cuenta, sender, respuesta)

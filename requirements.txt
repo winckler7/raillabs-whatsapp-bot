@@ -4,3 +4,6 @@ python-dotenv==1.0.1
 anthropic
 psycopg2-binary
 gunicorn
+google-api-python-client
+google-auth
+tzdata

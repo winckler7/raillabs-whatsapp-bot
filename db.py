@@ -1,7 +1,11 @@
 import os
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import psycopg2
 from psycopg2.extras import Json
+
+ZONA_NEGOCIO = ZoneInfo("America/Mexico_City")
 
 DATABASE_URL = os.environ["DATABASE_URL"]
 
@@ -27,6 +31,20 @@ def init_db():
             CREATE TABLE IF NOT EXISTS mensajes_procesados (
                 message_id TEXT PRIMARY KEY,
                 procesado_en TIMESTAMPTZ NOT NULL DEFAULT now()
+            )
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS citas (
+                id SERIAL PRIMARY KEY,
+                cuenta_id INTEGER NOT NULL REFERENCES cuentas(id) ON DELETE CASCADE,
+                conversacion_id INTEGER REFERENCES conversaciones(id) ON DELETE SET NULL,
+                telefono TEXT NOT NULL,
+                nombre_cliente TEXT,
+                inicio TIMESTAMPTZ NOT NULL,
+                resumen TEXT NOT NULL,
+                creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
             )
             """
         )
@@ -425,3 +443,48 @@ def borrar_historial(cuenta_id, telefono):
             (cuenta_id, telefono),
         )
         return cur.rowcount > 0
+
+
+def registrar_cita(cuenta_id, conversacion_id, telefono, nombre_cliente, inicio, resumen):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO citas (cuenta_id, conversacion_id, telefono, nombre_cliente, inicio, resumen)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """,
+            (cuenta_id, conversacion_id, telefono, nombre_cliente, inicio, resumen),
+        )
+
+
+def resumen_del_dia(cuenta_id):
+    # "Hoy" se calcula en hora de Ciudad de México, no en la del servidor
+    # (Railway corre en UTC) -- si no, un contacto de las 7pm en CDMX podría
+    # contarse en el día equivocado.
+    ahora = datetime.now(ZONA_NEGOCIO)
+    inicio_dia = ahora.replace(hour=0, minute=0, second=0, microsecond=0)
+    fin_dia = inicio_dia + timedelta(days=1)
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT count(*) FROM conversaciones
+            WHERE cuenta_id = %s AND primer_contacto >= %s AND primer_contacto < %s
+            """,
+            (cuenta_id, inicio_dia, fin_dia),
+        )
+        contactos_nuevos = cur.fetchone()[0]
+
+        cur.execute(
+            """
+            SELECT telefono, nombre_cliente, inicio, resumen FROM citas
+            WHERE cuenta_id = %s AND creado_en >= %s AND creado_en < %s
+            ORDER BY inicio
+            """,
+            (cuenta_id, inicio_dia, fin_dia),
+        )
+        citas = [
+            {"telefono": r[0], "nombre_cliente": r[1], "inicio": r[2], "resumen": r[3]}
+            for r in cur.fetchall()
+        ]
+
+    return {"contactos_nuevos": contactos_nuevos, "citas": citas}
