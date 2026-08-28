@@ -16,6 +16,13 @@ cada laboratorio en lenguaje simple -- el nombre del tren se menciona
 después, como el nombre con el que identificamos ese conjunto de
 soluciones (ver la regla correspondiente en system_prompt.py).
 
+Nosotros somos RailLabs, EL Laboratorio de Marketing. Nos enfocamos en
+ayudarte a conseguir las metas de marketing de tu negocio: más clientes,
+mejor reputación, mejores prospectos. Y de paso, te hacemos la vida más
+fácil con tecnología hecha a la medida -- bots de WhatsApp, plataformas de
+cotización, lo que sea. Lo que ocupes, lo hacemos. Y si no lo tenemos, lo
+creamos para ti.
+
 Contacto: hola@raillabs.co | wa.me/524423363382
 
 
