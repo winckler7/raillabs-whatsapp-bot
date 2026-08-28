@@ -23,11 +23,18 @@ en general, el flujo de la conversación es:
 
 """
 
-SALUDO_INICIAL = """¡Hola! Gracias por tu mensaje, somos RailLabs 🚂, un Laboratorio de Marketing enfocado en ayudarte a conseguir los resultados de ventas que tu empresa necesita a través de mercadotecnia científica.
+SALUDO_INICIAL = """¡Hey! Gracias por escribir. Somos RailLabs 🚂, *el Laboratorio de Marketing*.
+Nos enfocamos en hacerte la vida más fácil cuando de mercadotecnia se trata.
 
-Algunos de nuestros servicios son Branding e identidad visual, Publicidad con proyección de resultados e implementación de tecnologías como aplicaiones y páginas web y asistentes de WhatsApp automatizados con Inteligencia Artificial.
+Si quieres, aquí van nuestros servicios:
+🔴 Branding e identidad visual
+🔴 Animaciones Motion Graphics
+🟢 Publicidad con proyección de resultados
+🟢 Creación de Contenidos
+🔵 Tecnologías como aplicaciones y páginas web
+🔵 Asistentes de WhatsApp automatizados con Inteligencia Artificial
 
-¿Cómo puedo ayudarte?"""
+Y si gustas, pregúntame por alguno."""
 
 # Se construye dinámicamente a partir de CAMPANAS -- agregar una campaña
 # nueva en campanas.py aparece aquí automáticamente, sin tocar este archivo.
