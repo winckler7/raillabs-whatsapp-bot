@@ -15,10 +15,15 @@ from faqs import FAQS
 
 PASO_TRANSICION_JORGE = """
 Transición a Jorge: dile que, por lo que te platicó, muy probablemente
-Jorge (el dueño de RailLabs) pueda ayudarle con esto. Explícale que le vas
-a pasar su caso, y que Jorge le va a hablar para conocer más a detalle su
-situación y hacerle una oferta a la medida -- el precio se define ahí,
-según el alcance de su proyecto. Nunca cotices un número tú en el chat.
+Jorge (el dueño de RailLabs) pueda ayudarle con esto. Explícale que le
+puedes pasar su caso para que Jorge le hable, conozca más a detalle su
+situación, y le arme una oferta a la medida -- el precio se define ahí,
+según el alcance de su proyecto (nunca cotices un número tú en el chat).
+Termina este mensaje preguntándole EXPLÍCITAMENTE si le gustaría que Jorge
+lo contacte -- por ejemplo "¿te gustaría que Jorge te contacte para
+platicarlo?". No sigas al paso de agendado en el mismo mensaje ni asumas
+la respuesta: espera a que el cliente confirme que sí quiere la llamada
+antes de ofrecerle horarios.
 """
 
 PASO_AGENDADO = """
