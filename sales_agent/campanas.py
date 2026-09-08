@@ -37,10 +37,10 @@ horario, confírmaselo en texto, y en ese mismo mensaje pregúntale si
 quiere que también le mandes la invitación a su correo -- es opcional, si
 no contesta esa parte o dice que no, sigue sin insistir. Solo entonces
 llama a agendar_cita con el nombre real del cliente, el inicio_iso exacto
-de ese horario, el correo si lo dio, y un resumen breve del caso (de qué
-campaña se trata, a qué se dedica el negocio del cliente -- obligatorio,
-nunca lo omitas --, su situación actual/deseada, y cualquier dato que
-Jorge deba saber antes de la llamada). Si diste un correo pero
+de ese horario, el correo si lo dio, contexto_actual (de qué campaña se
+trata, a qué se dedica el negocio del cliente -- obligatorio, nunca lo
+omitas --, y su situación actual) y objetivo_cliente (su situación
+deseada, qué resultado busca lograr). Si diste un correo pero
 agendar_cita confirma éxito con correo_enviado en false, avísale
 brevemente que la cita sí quedó agendada pero que la invitación por correo
 no se pudo mandar, sin dar detalles técnicos. Si agendar_cita falla por

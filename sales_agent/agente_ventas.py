@@ -53,17 +53,24 @@ TOOLS = [
                     "type": "string",
                     "description": "Correo del cliente, solo si lo dio voluntariamente al preguntarle si quiere la invitación por correo. Es opcional -- si no lo dio, omite este campo por completo, no insistas ni lo pidas como requisito.",
                 },
-                "resumen": {
+                "contexto_actual": {
                     "type": "string",
                     "description": (
-                        "Resumen breve (3-6 líneas) del caso: qué campaña o "
-                        "servicio le interesa, contexto relevante de su "
-                        "negocio o situación, y cualquier dato que Jorge "
-                        "deba saber antes de la llamada."
+                        "Situación actual del cliente en 2-4 líneas: a qué se "
+                        "dedica su negocio, qué campaña o servicio le "
+                        "interesa, y el motivo o dolor que lo trajo a "
+                        "escribir."
+                    ),
+                },
+                "objetivo_cliente": {
+                    "type": "string",
+                    "description": (
+                        "Situación deseada del cliente en 1-3 líneas: qué "
+                        "resultado busca lograr con esto."
                     ),
                 },
             },
-            "required": ["inicio_iso", "nombre_cliente", "resumen"],
+            "required": ["inicio_iso", "nombre_cliente", "contexto_actual", "objetivo_cliente"],
         },
     },
 ]
@@ -86,8 +93,15 @@ def _ejecutar_tool(nombre, input_, cuenta, sender, conversacion_id):
     if nombre == "agendar_cita":
         nombre_cliente = input_.get("nombre_cliente") or "Cliente de WhatsApp"
         correo_cliente = input_.get("correo_cliente")
+        contexto_actual = input_["contexto_actual"]
+        objetivo_cliente = input_["objetivo_cliente"]
+        # La DB y la descripción del evento de Calendar siguen guardando un
+        # solo texto de resumen (no vale la pena una migración de columna
+        # solo para esto) -- el correo a Jorge sí usa los dos campos por
+        # separado, para que se vean como secciones claras.
+        resumen = f"Contexto actual: {contexto_actual}\nObjetivo: {objetivo_cliente}"
         resultado = calendario.crear_evento(
-            input_["inicio_iso"], nombre_cliente, sender, input_["resumen"]
+            input_["inicio_iso"], nombre_cliente, sender, resumen
         )
         if resultado["ok"]:
             correo_enviado = False
@@ -101,14 +115,15 @@ def _ejecutar_tool(nombre, input_, cuenta, sender, conversacion_id):
             # diferencia de WhatsApp, el correo no tiene ventana de 24h, así
             # que no hace falta esperar a que él escriba "RESUMEN DEL DÍA").
             correo.enviar_aviso_dueno(
-                nombre_cliente, sender, correo_cliente, resultado["texto"], input_["resumen"]
+                nombre_cliente, sender, correo_cliente, resultado["texto"],
+                contexto_actual, objetivo_cliente,
             )
 
             try:
                 from db import registrar_cita
                 registrar_cita(
                     cuenta["id"], conversacion_id, sender, nombre_cliente,
-                    input_["inicio_iso"], input_["resumen"], correo_cliente,
+                    input_["inicio_iso"], resumen, correo_cliente,
                 )
             except Exception as e:
                 print(f"Error registrando cita en la base de datos: {e}", flush=True)

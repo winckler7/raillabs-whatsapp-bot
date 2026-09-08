@@ -42,22 +42,26 @@ def enviar_confirmacion_cliente(correo_cliente, nombre_cliente, texto_fecha):
         return False
 
 
-def enviar_aviso_dueno(nombre_cliente, telefono_cliente, correo_cliente, texto_fecha, resumen):
+def enviar_aviso_dueno(nombre_cliente, telefono_cliente, correo_cliente, texto_fecha, contexto_actual, objetivo_cliente):
     """Avisa a Jorge por correo de cada cita nueva, apenas se agenda."""
     owner_email = os.environ.get("OWNER_EMAIL")
     if not _api_key_configurada() or not owner_email:
         return
     try:
-        contacto = f"{telefono_cliente}" + (f" / {correo_cliente}" if correo_cliente else "")
+        linea_correo = f"<p>Correo: {correo_cliente}</p>" if correo_cliente else ""
         resend.api_key = os.environ["RESEND_API_KEY"]
         resend.Emails.send({
             "from": _from(),
             "to": [owner_email],
             "subject": f"Nueva cita: {nombre_cliente} -- {texto_fecha}",
             "html": (
-                f"<p><strong>{nombre_cliente}</strong> ({contacto})</p>"
-                f"<p>Cuándo: {texto_fecha}</p>"
-                f"<p>Resumen del caso:<br>{resumen}</p>"
+                f"<p><strong>Invitación agendada para llamada telefónica con Jorge.</strong></p>"
+                f"<p>Para: {nombre_cliente}</p>"
+                f"<p>Hora de la llamada: {texto_fecha}</p>"
+                f"<p>Número de teléfono: {telefono_cliente}</p>"
+                f"{linea_correo}"
+                f"<p>Contexto de motivo de la llamada o situación actual: {contexto_actual}</p>"
+                f"<p>Objetivo del cliente o situación deseada: {objetivo_cliente}</p>"
             ),
         })
     except Exception as e:
