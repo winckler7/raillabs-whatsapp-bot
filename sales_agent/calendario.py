@@ -126,12 +126,14 @@ def consultar_disponibilidad():
     }
 
 
-def crear_evento(inicio_iso, nombre_cliente, telefono_cliente, resumen, correo_cliente=None):
+def crear_evento(inicio_iso, nombre_cliente, telefono_cliente, resumen):
     """Crea el evento en Google Calendar. Antes de insertarlo vuelve a
     checar que el horario siga libre (evita choques si dos clientes eligen
-    el mismo slot casi al mismo tiempo). Si el cliente dio su correo, lo
-    agrega como invitado -- Google le manda la invitación automáticamente,
-    sin que nosotros mandemos ningún correo directo."""
+    el mismo slot casi al mismo tiempo). Ya no invita al cliente como
+    "attendee" de Google (no es confiable en cuentas de Gmail personal,
+    solo funciona con delegación de dominio de Workspace) -- la
+    confirmación al cliente y el aviso a Jorge se mandan aparte por correo
+    (ver correo.py, vía Resend)."""
     try:
         inicio = datetime.fromisoformat(inicio_iso)
     except ValueError:
@@ -155,27 +157,9 @@ def crear_evento(inicio_iso, nombre_cliente, telefono_cliente, resumen, correo_c
             "start": {"dateTime": inicio.isoformat(), "timeZone": TIMEZONE},
             "end": {"dateTime": fin.isoformat(), "timeZone": TIMEZONE},
         }
-
-        correo_enviado = False
-        if correo_cliente:
-            evento["attendees"] = [{"email": correo_cliente}]
-            try:
-                servicio.events().insert(
-                    calendarId=_calendar_id(), body=evento, sendUpdates="all"
-                ).execute()
-                correo_enviado = True
-            except Exception as e:
-                # Algunas cuentas de servicio no pueden invitar asistentes sin
-                # "delegación de dominio" (solo existe en Google Workspace, no
-                # en Gmail personal) -- si falla por eso, se agenda igual pero
-                # sin el invitado, para no perder la cita por esto.
-                print(f"No se pudo invitar al cliente por correo, se agenda sin invitado: {e}", flush=True)
-                del evento["attendees"]
-                servicio.events().insert(calendarId=_calendar_id(), body=evento).execute()
-        else:
-            servicio.events().insert(calendarId=_calendar_id(), body=evento).execute()
+        servicio.events().insert(calendarId=_calendar_id(), body=evento).execute()
     except Exception as e:
         print(f"Error creando evento en Google Calendar: {e}", flush=True)
         return {"ok": False, "error": "No se pudo agendar en el calendario en este momento."}
 
-    return {"ok": True, "texto": formato_legible(inicio), "correo_enviado": correo_enviado}
+    return {"ok": True, "texto": formato_legible(inicio)}

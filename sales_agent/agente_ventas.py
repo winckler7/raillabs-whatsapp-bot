@@ -10,6 +10,7 @@ import os
 from anthropic import Anthropic
 from system_prompt import SYSTEM_PROMPT
 import calendario
+import correo
 
 client = Anthropic()
 model = "claude-sonnet-5"
@@ -86,15 +87,23 @@ def _ejecutar_tool(nombre, input_, cuenta, sender, conversacion_id):
         nombre_cliente = input_.get("nombre_cliente") or "Cliente de WhatsApp"
         correo_cliente = input_.get("correo_cliente")
         resultado = calendario.crear_evento(
-            input_["inicio_iso"], nombre_cliente, sender, input_["resumen"], correo_cliente
+            input_["inicio_iso"], nombre_cliente, sender, input_["resumen"]
         )
         if resultado["ok"]:
-            # Se registra en la DB en vez de avisar por WhatsApp al momento --
-            # un mensaje "empujado" por el bot choca con la ventana de 24h de
-            # Meta (solo se puede mandar texto libre si el dueño le escribió
-            # al bot en las últimas 24h). En vez de eso, Jorge consulta el
-            # resumen del día escribiéndole "RESUMEN DEL DÍA" al bot (ver
-            # app.py), lo cual sí cae dentro de esa ventana porque lo inicia él.
+            correo_enviado = False
+            if correo_cliente:
+                correo_enviado = correo.enviar_confirmacion_cliente(
+                    correo_cliente, nombre_cliente, resultado["texto"]
+                )
+            resultado["correo_enviado"] = correo_enviado
+
+            # El aviso a Jorge se manda por correo apenas se agenda (a
+            # diferencia de WhatsApp, el correo no tiene ventana de 24h, así
+            # que no hace falta esperar a que él escriba "RESUMEN DEL DÍA").
+            correo.enviar_aviso_dueno(
+                nombre_cliente, sender, correo_cliente, resultado["texto"], input_["resumen"]
+            )
+
             try:
                 from db import registrar_cita
                 registrar_cita(

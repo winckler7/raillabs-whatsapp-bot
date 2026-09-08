@@ -7,3 +7,4 @@ gunicorn
 google-api-python-client
 google-auth
 tzdata
+resend
