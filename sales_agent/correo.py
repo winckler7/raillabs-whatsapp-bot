@@ -17,10 +17,13 @@ def _from():
     return os.environ["RESEND_FROM_EMAIL"]
 
 
-def enviar_confirmacion_cliente(correo_cliente, nombre_cliente, texto_fecha):
-    """Manda la confirmación de la cita al cliente. Devuelve True/False según
-    si se pudo mandar -- el bot usa esto para avisarle o no que revise su
-    correo, sin que un error aquí tumbe el flujo de agendado."""
+def enviar_confirmacion_cliente(correo_cliente, nombre_cliente, texto_fecha, contexto_actual, objetivo_cliente):
+    """Manda la confirmación de la cita al cliente, incluyendo lo que el
+    asistente de IA entendió de su situación -- funciona como demo en vivo
+    del producto (el bot mismo) sin que el cliente tenga que preguntar.
+    Devuelve True/False según si se pudo mandar -- el bot usa esto para
+    avisarle o no que revise su correo, sin que un error aquí tumbe el
+    flujo de agendado."""
     if not _api_key_configurada():
         return False
     try:
@@ -33,6 +36,10 @@ def enviar_confirmacion_cliente(correo_cliente, nombre_cliente, texto_fecha):
                 f"<p>Hola {nombre_cliente},</p>"
                 f"<p>Quedó agendada tu llamada con Jorge de RailLabs para "
                 f"<strong>{texto_fecha}</strong> (hora de Ciudad de México).</p>"
+                f"<p>Esto es lo que nuestro asistente de IA entendió de tu "
+                f"situación en automático, antes de que Jorge te hable:</p>"
+                f"<p><strong>Motivo de la llamada:</strong> {contexto_actual}</p>"
+                f"<p><strong>Tu objetivo:</strong> {objetivo_cliente}</p>"
                 f"<p>Cualquier cosa, respóndenos por este medio o por WhatsApp.</p>"
             ),
         })

@@ -59,14 +59,22 @@ TOOLS = [
                         "Situación actual del cliente en 2-4 líneas: a qué se "
                         "dedica su negocio, qué campaña o servicio le "
                         "interesa, y el motivo o dolor que lo trajo a "
-                        "escribir."
+                        "escribir. OJO: esto se le muestra también al cliente "
+                        "en su correo de confirmación, no es solo una nota "
+                        "interna para Jorge -- escríbelo hablándole "
+                        "directo a él en segunda persona ('tienes', 'buscas', "
+                        "nunca 'el cliente tiene'), en tono respetuoso, "
+                        "positivo y profesional, nunca con juicios de valor "
+                        "ni describiéndolo de forma que lo incomode leer."
                     ),
                 },
                 "objetivo_cliente": {
                     "type": "string",
                     "description": (
                         "Situación deseada del cliente en 1-3 líneas: qué "
-                        "resultado busca lograr con esto."
+                        "resultado busca lograr con esto. Mismo criterio que "
+                        "contexto_actual: se le muestra al cliente, en "
+                        "segunda persona y tono respetuoso."
                     ),
                 },
             },
@@ -107,7 +115,8 @@ def _ejecutar_tool(nombre, input_, cuenta, sender, conversacion_id):
             correo_enviado = False
             if correo_cliente:
                 correo_enviado = correo.enviar_confirmacion_cliente(
-                    correo_cliente, nombre_cliente, resultado["texto"]
+                    correo_cliente, nombre_cliente, resultado["texto"],
+                    contexto_actual, objetivo_cliente,
                 )
             resultado["correo_enviado"] = correo_enviado
 
