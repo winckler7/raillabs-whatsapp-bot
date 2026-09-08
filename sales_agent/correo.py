@@ -60,8 +60,8 @@ def enviar_aviso_dueno(nombre_cliente, telefono_cliente, correo_cliente, texto_f
                 f"<p>Hora de la llamada: {texto_fecha}</p>"
                 f"<p>Número de teléfono: {telefono_cliente}</p>"
                 f"{linea_correo}"
-                f"<p>Contexto de motivo de la llamada o situación actual: {contexto_actual}</p>"
-                f"<p>Objetivo del cliente o situación deseada: {objetivo_cliente}</p>"
+                f"<p>Motivo de la llamada: {contexto_actual}</p>"
+                f"<p>Objetivo del cliente: {objetivo_cliente}</p>"
             ),
         })
     except Exception as e:
