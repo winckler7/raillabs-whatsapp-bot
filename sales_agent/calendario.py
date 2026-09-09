@@ -157,9 +157,22 @@ def crear_evento(inicio_iso, nombre_cliente, telefono_cliente, resumen):
             "start": {"dateTime": inicio.isoformat(), "timeZone": TIMEZONE},
             "end": {"dateTime": fin.isoformat(), "timeZone": TIMEZONE},
         }
-        servicio.events().insert(calendarId=_calendar_id(), body=evento).execute()
+        evento_creado = servicio.events().insert(calendarId=_calendar_id(), body=evento).execute()
     except Exception as e:
         print(f"Error creando evento en Google Calendar: {e}", flush=True)
         return {"ok": False, "error": "No se pudo agendar en el calendario en este momento."}
 
-    return {"ok": True, "texto": formato_legible(inicio)}
+    return {"ok": True, "texto": formato_legible(inicio), "event_id": evento_creado["id"]}
+
+
+def cancelar_evento(event_id):
+    """Borra el evento de Google Calendar. Devuelve True/False -- si falla
+    (ej. porque ya no existe), no debe tumbar la cancelación en la base de
+    datos, que es la fuente de verdad de si la cita sigue activa."""
+    try:
+        servicio = _servicio()
+        servicio.events().delete(calendarId=_calendar_id(), eventId=event_id).execute()
+        return True
+    except Exception as e:
+        print(f"Error cancelando evento en Google Calendar: {e}", flush=True)
+        return False

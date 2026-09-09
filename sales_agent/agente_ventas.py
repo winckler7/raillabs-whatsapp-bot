@@ -81,6 +81,38 @@ TOOLS = [
             "required": ["inicio_iso", "nombre_cliente", "contexto_actual", "objetivo_cliente"],
         },
     },
+    {
+        "name": "cancelar_cita",
+        "description": (
+            "Cancela la cita activa del cliente (identificado por su número "
+            "de WhatsApp) y borra el evento del Google Calendar de Jorge. "
+            "Antes de llamarla: 1) ofrécele reagendar a otro horario en vez "
+            "de cancelar del todo (usa reagendar_cita si acepta), y 2) si "
+            "de plano quiere cancelar, pídele que lo confirme explícitamente "
+            "una vez más. Nunca la llames solo porque preguntó cómo "
+            "cancelar o dudó -- solo tras su confirmación explícita."
+        ),
+        "input_schema": {"type": "object", "properties": {}, "required": []},
+    },
+    {
+        "name": "reagendar_cita",
+        "description": (
+            "Mueve la cita activa del cliente a un horario nuevo: cancela el "
+            "evento viejo y crea uno nuevo en un solo paso, conservando el "
+            "contexto original. Antes de llamarla usa consultar_disponibilidad "
+            "para ofrecerle horarios y espera a que confirme cuál elige."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "nuevo_inicio_iso": {
+                    "type": "string",
+                    "description": "Nuevo horario elegido, tal como vino en el campo inicio_iso de consultar_disponibilidad.",
+                },
+            },
+            "required": ["nuevo_inicio_iso"],
+        },
+    },
 ]
 
 
@@ -133,10 +165,55 @@ def _ejecutar_tool(nombre, input_, cuenta, sender, conversacion_id):
                 registrar_cita(
                     cuenta["id"], conversacion_id, sender, nombre_cliente,
                     input_["inicio_iso"], resumen, correo_cliente,
+                    resultado.get("event_id"),
                 )
             except Exception as e:
                 print(f"Error registrando cita en la base de datos: {e}", flush=True)
         return resultado
+
+    if nombre == "cancelar_cita":
+        from db import obtener_cita_activa, marcar_cita_cancelada
+
+        cita = obtener_cita_activa(cuenta["id"], sender)
+        if not cita:
+            return {"ok": False, "error": "No encontramos una cita activa a tu nombre."}
+
+        if cita["google_event_id"]:
+            calendario.cancelar_evento(cita["google_event_id"])
+        marcar_cita_cancelada(cita["id"])
+
+        texto_fecha = calendario.formato_legible(cita["inicio"].astimezone(calendario.ZONA))
+        if cita["correo"]:
+            correo.enviar_cancelacion_cliente(cita["correo"], cita["nombre_cliente"], texto_fecha)
+        correo.enviar_aviso_cancelacion_dueno(cita["nombre_cliente"], sender, cita["correo"], texto_fecha)
+
+        return {"ok": True, "texto": texto_fecha}
+
+    if nombre == "reagendar_cita":
+        from db import obtener_cita_activa, actualizar_cita_reagendada
+
+        cita = obtener_cita_activa(cuenta["id"], sender)
+        if not cita:
+            return {"ok": False, "error": "No encontramos una cita activa a tu nombre para reagendar."}
+
+        resultado = calendario.crear_evento(
+            input_["nuevo_inicio_iso"], cita["nombre_cliente"], sender, cita["resumen"]
+        )
+        if not resultado["ok"]:
+            return resultado
+
+        texto_anterior = calendario.formato_legible(cita["inicio"].astimezone(calendario.ZONA))
+        if cita["google_event_id"]:
+            calendario.cancelar_evento(cita["google_event_id"])
+        actualizar_cita_reagendada(cita["id"], input_["nuevo_inicio_iso"], resultado.get("event_id"))
+
+        if cita["correo"]:
+            correo.enviar_reagendo_cliente(cita["correo"], cita["nombre_cliente"], texto_anterior, resultado["texto"])
+        correo.enviar_aviso_reagendo_dueno(
+            cita["nombre_cliente"], sender, cita["correo"], texto_anterior, resultado["texto"]
+        )
+
+        return {"ok": True, "texto": resultado["texto"]}
 
     return {"ok": False, "error": f"Tool desconocida: {nombre}"}
 

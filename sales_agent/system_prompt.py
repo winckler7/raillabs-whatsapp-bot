@@ -3,7 +3,7 @@
 # camino B (MENU_SERVICIOS), que da mejores respuestas. Para reconectar:
 # volver a importar CAMPANAS y restaurar el bloque CAMPANAS_TEXT / camino A
 # más abajo (ver git log de este archivo).
-from campanas import PASO_TRANSICION_JORGE, PASO_AGENDADO
+from campanas import PASO_TRANSICION_JORGE, PASO_AGENDADO, PASO_CANCELACION_REAGENDADO
 from menu_servicios import MENU_SERVICIOS
 from faqs import FAQS
 
@@ -68,6 +68,8 @@ se trate. Sigue los pasos en orden:
    le gustaría llegar, sin ofrecerle opciones de antemano.
 4. {PASO_TRANSICION_JORGE}
 5. {PASO_AGENDADO}
+
+{PASO_CANCELACION_REAGENDADO}
 """
 
 REGLAS_GENERALES = """

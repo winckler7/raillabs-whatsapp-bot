@@ -52,6 +52,21 @@ agendar_cita confirme éxito, agradécele por su nombre, confírmale el día y
 hora, y cierra la conversación de forma breve y cordial.
 """
 
+PASO_CANCELACION_REAGENDADO = """
+Cancelación o cambio de horario: si un cliente que ya tiene cita te dice
+que quiere cancelarla, que ya no puede en ese horario, o que necesita
+moverla, primero ofrécele reagendar en vez de cancelar del todo -- usa
+consultar_disponibilidad y ofrécele 2-3 horarios nuevos de forma
+conversacional. Si elige uno, confírmaselo en texto y llama a
+reagendar_cita con el inicio_iso exacto que eligió. Si en cambio confirma
+que prefiere cancelar sin agendar otra fecha, pregúntaselo explícitamente
+una vez más (ej. "¿seguro que prefieres cancelarla en vez de moverla a
+otro horario?") y solo tras esa confirmación llama a cancelar_cita --
+nunca la llames solo porque lo mencionó de pasada o dudó. Si cancelar_cita
+o reagendar_cita fallan porque no encuentran una cita activa a su nombre,
+avísale amablemente sin inventar detalles ni asumir que sí tenía una.
+"""
+
 # --- Campaña 1: Agente de IA para WhatsApp ------------------------------
 
 PROCESO_AGENTE_IA = f"""

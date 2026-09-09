@@ -52,6 +52,10 @@ def init_db():
         # ALTER de respaldo para cuando la tabla ya existía antes de agregar
         # `correo` (CREATE TABLE IF NOT EXISTS de arriba no la actualiza).
         cur.execute("ALTER TABLE citas ADD COLUMN IF NOT EXISTS correo TEXT")
+        # `google_event_id` para poder cancelar/reagendar el evento después,
+        # y `cancelada_en` para marcar cancelaciones sin borrar el registro.
+        cur.execute("ALTER TABLE citas ADD COLUMN IF NOT EXISTS google_event_id TEXT")
+        cur.execute("ALTER TABLE citas ADD COLUMN IF NOT EXISTS cancelada_en TIMESTAMPTZ")
 
 
 def ya_procesado(message_id):
@@ -449,14 +453,50 @@ def borrar_historial(cuenta_id, telefono):
         return cur.rowcount > 0
 
 
-def registrar_cita(cuenta_id, conversacion_id, telefono, nombre_cliente, inicio, resumen, correo=None):
+def registrar_cita(cuenta_id, conversacion_id, telefono, nombre_cliente, inicio, resumen, correo=None, google_event_id=None):
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute(
             """
-            INSERT INTO citas (cuenta_id, conversacion_id, telefono, nombre_cliente, correo, inicio, resumen)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO citas (cuenta_id, conversacion_id, telefono, nombre_cliente, correo, inicio, resumen, google_event_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """,
-            (cuenta_id, conversacion_id, telefono, nombre_cliente, correo, inicio, resumen),
+            (cuenta_id, conversacion_id, telefono, nombre_cliente, correo, inicio, resumen, google_event_id),
+        )
+
+
+def obtener_cita_activa(cuenta_id, telefono):
+    """La próxima cita futura y no cancelada de este cliente, si tiene una."""
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT id, nombre_cliente, correo, inicio, resumen, google_event_id
+            FROM citas
+            WHERE cuenta_id = %s AND telefono = %s
+              AND cancelada_en IS NULL AND inicio > now()
+            ORDER BY inicio ASC
+            LIMIT 1
+            """,
+            (cuenta_id, telefono),
+        )
+        row = cur.fetchone()
+        if not row:
+            return None
+        return {
+            "id": row[0], "nombre_cliente": row[1], "correo": row[2],
+            "inicio": row[3], "resumen": row[4], "google_event_id": row[5],
+        }
+
+
+def marcar_cita_cancelada(cita_id):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("UPDATE citas SET cancelada_en = now() WHERE id = %s", (cita_id,))
+
+
+def actualizar_cita_reagendada(cita_id, nuevo_inicio, nuevo_google_event_id):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            "UPDATE citas SET inicio = %s, google_event_id = %s WHERE id = %s",
+            (nuevo_inicio, nuevo_google_event_id, cita_id),
         )
 
 
@@ -482,6 +522,7 @@ def resumen_del_dia(cuenta_id):
             """
             SELECT telefono, nombre_cliente, correo, inicio, resumen FROM citas
             WHERE cuenta_id = %s AND creado_en >= %s AND creado_en < %s
+              AND cancelada_en IS NULL
             ORDER BY inicio
             """,
             (cuenta_id, inicio_dia, fin_dia),
