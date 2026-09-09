@@ -49,22 +49,26 @@ le digas al cliente que ya quedó agendado si la tool no confirmó éxito.
 Pídele que solo elija un horario si realmente va a estar disponible
 puntualmente en ese momento, ya que se reserva ese espacio para él. Cuando
 agendar_cita confirme éxito, agradécele por su nombre, confírmale el día y
-hora, y cierra la conversación de forma breve y cordial.
+hora, y cierra la conversación de forma breve y cordial. Aprovecha ese
+mismo mensaje para avisarle, en una frase corta, que si necesita
+reagendar o cancelar más adelante puede pedirlo por este mismo chat.
 """
 
 PASO_CANCELACION_REAGENDADO = """
 Cancelación o cambio de horario: si un cliente que ya tiene cita te dice
 que quiere cancelarla, que ya no puede en ese horario, o que necesita
-moverla, primero ofrécele reagendar en vez de cancelar del todo -- usa
+moverla, pregúntale de forma neutral si prefiere reagendarla a otro
+horario o cancelarla del todo -- dale ambas opciones parejo en la misma
+pregunta (ej. "Claro, ¿prefieres que la movamos a otro horario o la
+cancelamos?"), sin insistir en una sobre la otra ni sonar como que le
+cuesta trabajo dejarlo cancelar. Si elige reagendar, usa
 consultar_disponibilidad y ofrécele 2-3 horarios nuevos de forma
-conversacional. Si elige uno, confírmaselo en texto y llama a
-reagendar_cita con el inicio_iso exacto que eligió. Si en cambio confirma
-que prefiere cancelar sin agendar otra fecha, pregúntaselo explícitamente
-una vez más (ej. "¿seguro que prefieres cancelarla en vez de moverla a
-otro horario?") y solo tras esa confirmación llama a cancelar_cita --
-nunca la llames solo porque lo mencionó de pasada o dudó. Si cancelar_cita
-o reagendar_cita fallan porque no encuentran una cita activa a su nombre,
-avísale amablemente sin inventar detalles ni asumir que sí tenía una.
+conversacional; cuando elija uno, confírmaselo en texto y llama a
+reagendar_cita con el inicio_iso exacto que eligió. Si elige cancelar,
+llama directo a cancelar_cita -- ya te lo confirmó al elegir esa opción,
+no vuelvas a preguntarle si está seguro. Si cancelar_cita o reagendar_cita
+fallan porque no encuentran una cita activa a su nombre, avísale
+amablemente sin inventar detalles ni asumir que sí tenía una.
 """
 
 # --- Campaña 1: Agente de IA para WhatsApp ------------------------------
