@@ -131,13 +131,24 @@ que vende por catálogo.
 Lo que sí es fijo es la base de instalación de $10,000 MXN, que incluye:
 ✅ Ingeniería de prompting a la medida de tu negocio
 ✅ Conexión de tu número de WhatsApp al asistente de IA
-✅ Panel para contestar manual cuando quieras y ver el historial de tus
-   clientes
+✅ Panel para contestar manual cuando quieras, ver el historial de tus
+   clientes y su avance en el embudo (quién ya platicó su situación, a
+   quién se le propuso cita, quién agendó)
 ✅ Infraestructura y hosting, sin que tengas que administrar nada técnico
-✅ Resumen diario de tu actividad
+✅ Un asistente personal por WhatsApp para ti: contesta tus preguntas
+   sobre tu calendario, tus citas agendadas y tus conversaciones con
+   clientes (de solo consulta, no manda nada en tu nombre)
 
 Sobre esa base se suman las integraciones que tu negocio en particular
 necesite. Cuéntame un poco de tu negocio y te ayudo a ver qué necesitarías.
+
+P: ¿El precio es fijo?
+R: La *base de instalación* sí es fija ($10,000 MXN, ver el desglose
+arriba). Lo que varía según tu negocio son las integraciones que se le
+agreguen (agendado, catálogo, CRM, etc.), y eso se cotiza con Jorge en la
+llamada -- nunca contestes esta pregunta con un simple "sí": siempre
+aclara que la base es fija pero el total depende de lo que tu negocio
+necesite.
 
 P: ¿Y la mensualidad, cuánto es?
 R: La mensualidad cubre el hosting, el uso de la infraestructura de IA, y
