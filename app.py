@@ -7,6 +7,7 @@ load_dotenv()
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "sales_agent"))
 from agente_ventas import chat, add_user_message, add_assistant_message
+from agente_dueno import chat_dueno
 from db import (
     init_db,
     get_historial,
@@ -38,8 +39,9 @@ init_db()
 # se buscan en la tabla `cuentas` con get_cuenta_by_phone_number_id().
 VERIFY_TOKEN = os.environ["VERIFY_TOKEN"]
 
-# Número del dueño (Jorge) para el comando "RESUMEN DEL DÍA" -- opcional: si
-# no está configurado, ese comando simplemente no se activa para nadie.
+# Número del dueño (Jorge): sus mensajes van a su asistente personal
+# (agente_dueno.py) en vez de al agente de ventas -- opcional: si no está
+# configurado, el asistente simplemente no se activa para nadie.
 OWNER_WHATSAPP_NUMBER = os.environ.get("OWNER_WHATSAPP_NUMBER")
 COMANDOS_RESUMEN_DIA = {"RESUMEN DEL DIA", "RESUMEN DEL DÍA"}
 
@@ -187,6 +189,23 @@ def receive_message():
         wa_id = send_message(cuenta, sender, respuesta)
         registrar_mensaje(conversacion_id, "saliente", respuesta, wa_message_id=wa_id)
         return jsonify(status="resumen_enviado"), 200
+
+    if sender == OWNER_WHATSAPP_NUMBER:
+        # Asistente personal del dueño (beta, solo lectura). Va antes del
+        # chequeo de modo "humano" -- el dueño siempre recibe respuesta de su
+        # asistente, y nunca cae en el agente de ventas.
+        messages = get_historial(cuenta["id"], sender)
+        add_user_message(messages, text)
+        try:
+            respuesta = chat_dueno(messages, cuenta, sender)
+        except Exception as e:
+            print(f"Error en el asistente del dueño: {e}", flush=True)
+            respuesta = "Tuve un problema consultando eso, ¿me lo vuelves a preguntar en un momento?"
+        add_assistant_message(messages, respuesta)
+        guardar_historial(cuenta["id"], sender, messages)
+        wa_id = send_message(cuenta, sender, respuesta)
+        registrar_mensaje(conversacion_id, "saliente", respuesta, wa_message_id=wa_id)
+        return jsonify(status="asistente_dueno"), 200
 
     if conversacion["modo"] == "humano":
         # Un humano tomó el control de esta conversación desde el panel --

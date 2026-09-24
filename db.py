@@ -560,3 +560,152 @@ def resumen_del_dia(cuenta_id):
         ]
 
     return {"contactos_nuevos": contactos_nuevos, "citas": citas}
+
+
+# --- Consultas del asistente del dueño (sales_agent/agente_dueno.py) ---
+# Todas son de solo lectura y excluyen la conversación del propio dueño con
+# su asistente (si no, "¿quién me escribió hoy?" lo contaría a él mismo).
+
+
+def citas_en_rango(cuenta_id, inicio, fin, incluir_canceladas=False):
+    """Citas agendadas por el bot cuyo horario cae entre `inicio` y `fin`."""
+    condicion = "" if incluir_canceladas else "AND cancelada_en IS NULL"
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            f"""
+            SELECT conversacion_id, telefono, nombre_cliente, correo, inicio, resumen, cancelada_en
+            FROM citas
+            WHERE cuenta_id = %s AND inicio >= %s AND inicio < %s {condicion}
+            ORDER BY inicio
+            """,
+            (cuenta_id, inicio, fin),
+        )
+        columnas = [
+            "conversacion_id", "telefono", "nombre_cliente", "correo", "inicio", "resumen", "cancelada_en",
+        ]
+        return [dict(zip(columnas, row)) for row in cur.fetchall()]
+
+
+def resumen_actividad(cuenta_id, inicio, fin, excluir_telefono=None):
+    """Números del periodo: contactos nuevos, conversaciones con mensajes del
+    cliente, citas agendadas/canceladas en el periodo y en qué etapa del
+    embudo van las conversaciones que tuvieron actividad."""
+    excluir = excluir_telefono or ""
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT count(*) FROM conversaciones
+            WHERE cuenta_id = %s AND telefono <> %s
+              AND primer_contacto >= %s AND primer_contacto < %s
+            """,
+            (cuenta_id, excluir, inicio, fin),
+        )
+        contactos_nuevos = cur.fetchone()[0]
+
+        cur.execute(
+            """
+            SELECT c.etapa_embudo, count(*) FROM conversaciones c
+            WHERE c.cuenta_id = %s AND c.telefono <> %s
+              AND EXISTS (
+                  SELECT 1 FROM mensajes m
+                  WHERE m.conversacion_id = c.id AND m.direccion = 'entrante'
+                    AND m.creado_en >= %s AND m.creado_en < %s
+              )
+            GROUP BY c.etapa_embudo
+            """,
+            (cuenta_id, excluir, inicio, fin),
+        )
+        por_etapa = {r[0]: r[1] for r in cur.fetchall()}
+
+        cur.execute(
+            """
+            SELECT count(*) FILTER (WHERE creado_en >= %s AND creado_en < %s AND cancelada_en IS NULL),
+                   count(*) FILTER (WHERE cancelada_en >= %s AND cancelada_en < %s)
+            FROM citas WHERE cuenta_id = %s
+            """,
+            (inicio, fin, inicio, fin, cuenta_id),
+        )
+        citas_agendadas, citas_canceladas = cur.fetchone()
+
+    return {
+        "contactos_nuevos": contactos_nuevos,
+        "conversaciones_con_mensajes": sum(por_etapa.values()),
+        "conversaciones_activas_por_etapa": por_etapa,
+        "citas_agendadas_en_el_periodo": citas_agendadas,
+        "citas_canceladas_en_el_periodo": citas_canceladas,
+    }
+
+
+def buscar_conversaciones(
+    cuenta_id, excluir_telefono=None, texto=None, etapa=None,
+    solo_no_leidas=False, activas_desde=None, limite=15,
+):
+    """Búsqueda flexible de conversaciones para el asistente del dueño.
+    `texto` busca en nombre, teléfono, notas y en el contenido de los
+    mensajes (ej. "panadería" encuentra al cliente que la mencionó)."""
+    condiciones = ["c.cuenta_id = %s", "c.telefono <> %s"]
+    params = [cuenta_id, excluir_telefono or ""]
+    if texto:
+        patron = f"%{texto}%"
+        condiciones.append(
+            """(c.nombre ILIKE %s OR c.telefono LIKE %s OR c.notas ILIKE %s OR EXISTS (
+                   SELECT 1 FROM mensajes m WHERE m.conversacion_id = c.id AND m.contenido ILIKE %s
+               ))"""
+        )
+        params += [patron, patron, patron, patron]
+    if etapa:
+        condiciones.append("c.etapa_embudo = %s")
+        params.append(etapa)
+    if activas_desde:
+        condiciones.append("c.ultimo_mensaje >= %s")
+        params.append(activas_desde)
+
+    no_leidos_sql = """(
+        SELECT count(*) FROM mensajes m
+        WHERE m.conversacion_id = c.id AND m.direccion = 'entrante'
+          AND (c.visto_en IS NULL OR m.creado_en > c.visto_en)
+    )"""
+    if solo_no_leidas:
+        condiciones.append(f"{no_leidos_sql} > 0")
+
+    params.append(limite)
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            f"""
+            SELECT c.id, c.nombre, c.telefono, c.etapa_embudo, c.modo, c.archivada,
+                   c.primer_contacto, c.ultimo_mensaje,
+                   (SELECT contenido FROM mensajes m WHERE m.conversacion_id = c.id
+                    ORDER BY m.id DESC LIMIT 1) AS ultimo_texto,
+                   {no_leidos_sql} AS no_leidos,
+                   COALESCE((
+                       SELECT json_agg(e.nombre)
+                       FROM conversacion_etiquetas ce JOIN etiquetas e ON e.id = ce.etiqueta_id
+                       WHERE ce.conversacion_id = c.id
+                   ), '[]') AS etiquetas
+            FROM conversaciones c
+            WHERE {" AND ".join(condiciones)}
+            ORDER BY c.ultimo_mensaje DESC
+            LIMIT %s
+            """,
+            params,
+        )
+        columnas = [
+            "conversacion_id", "nombre", "telefono", "etapa_embudo", "modo", "archivada",
+            "primer_contacto", "ultimo_mensaje", "ultimo_texto", "no_leidos", "etiquetas",
+        ]
+        return [dict(zip(columnas, row)) for row in cur.fetchall()]
+
+
+def ultimos_mensajes(conversacion_id, limite=40):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT direccion, tipo, contenido, creado_en FROM (
+                SELECT id, direccion, tipo, contenido, creado_en FROM mensajes
+                WHERE conversacion_id = %s ORDER BY id DESC LIMIT %s
+            ) ultimos ORDER BY id ASC
+            """,
+            (conversacion_id, limite),
+        )
+        columnas = ["direccion", "tipo", "contenido", "creado_en"]
+        return [dict(zip(columnas, row)) for row in cur.fetchall()]

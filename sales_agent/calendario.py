@@ -176,3 +176,45 @@ def cancelar_evento(event_id):
     except Exception as e:
         print(f"Error cancelando evento en Google Calendar: {e}", flush=True)
         return False
+
+
+def listar_eventos(inicio, fin, limite=50):
+    """Todos los eventos del calendario de Jorge entre `inicio` y `fin` (no
+    solo las citas agendadas por el bot -- también lo que él haya puesto a
+    mano). Solo lectura, para el asistente del dueño (agente_dueno.py)."""
+    try:
+        servicio = _servicio()
+        respuesta = servicio.events().list(
+            calendarId=_calendar_id(),
+            timeMin=inicio.isoformat(),
+            timeMax=fin.isoformat(),
+            singleEvents=True,
+            orderBy="startTime",
+            maxResults=limite,
+        ).execute()
+    except Exception as e:
+        print(f"Error listando eventos de Google Calendar: {e}", flush=True)
+        return {"ok": False, "error": "No se pudo consultar el calendario en este momento."}
+
+    eventos = []
+    for evento in respuesta.get("items", []):
+        inicio_evento = evento.get("start", {})
+        fin_evento = evento.get("end", {})
+        if "dateTime" in inicio_evento:
+            texto_inicio = formato_legible(datetime.fromisoformat(inicio_evento["dateTime"]).astimezone(ZONA))
+            texto_fin = datetime.fromisoformat(fin_evento["dateTime"]).astimezone(ZONA).strftime("%I:%M %p").lstrip("0").lower()
+            todo_el_dia = False
+        else:
+            # Eventos de todo el día solo traen "date" (YYYY-MM-DD), sin hora.
+            fecha = datetime.fromisoformat(inicio_evento["date"])
+            texto_inicio = f"{DIAS_ES[fecha.weekday()]} {fecha.day} de {MESES_ES[fecha.month - 1]}"
+            texto_fin = None
+            todo_el_dia = True
+        eventos.append({
+            "titulo": evento.get("summary", "(sin título)"),
+            "inicio": texto_inicio,
+            "termina": texto_fin,
+            "todo_el_dia": todo_el_dia,
+            "descripcion": (evento.get("description") or "")[:500],
+        })
+    return {"ok": True, "eventos": eventos}
