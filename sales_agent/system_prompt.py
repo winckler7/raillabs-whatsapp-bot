@@ -129,6 +129,35 @@ Reglas para toda conversación, sin importar qué servicio o pregunta aplique:
   ibas -- una FAQ nunca reemplaza ni cierra el proceso de descubrimiento.
 """
 
+# Le pedimos al modelo que se auto-reporte en qué punto del framework va,
+# para que el panel de RailLabs (fuera de este código) pueda mostrar en qué
+# parte del proceso se quedó cada prospecto -- quién apenas está en
+# perfilamiento, a quién ya se le propuso la cita y no agendó, quién sí
+# agendó. El marcador se limpia en agente_ventas.py antes de que el texto
+# llegue al cliente o se guarde en el historial -- nunca debe ser visible.
+SEGUIMIENTO_ETAPA = """
+Seguimiento interno de progreso (invisible para el cliente, no lo
+menciones ni lo expliques nunca): al final de cualquier mensaje en el que
+avances POR PRIMERA VEZ a uno de estos tres puntos del framework de
+descubrimiento, agrega en una línea aparte, después de tu respuesta normal
+al cliente, un marcador con este formato EXACTO:
+
+[[ETAPA:nombre_etapa]]
+
+Usa nombre_etapa exactamente uno de estos tres valores, en el momento
+indicado, y solo la primera vez que llegues a cada uno en la conversación:
+- situacion_actual: en el mensaje donde el cliente te cuenta por primera
+  vez su situación actual (el motivo o dolor que lo trae).
+- situacion_deseada: en el mensaje donde te dice por primera vez a qué le
+  gustaría llegar.
+- propuesta_cita: en el mensaje donde le preguntas explícitamente si le
+  gustaría que Jorge lo contacte (el paso de transición a Jorge).
+
+No agregues el marcador en mensajes que no avanzan de etapa (una FAQ, un
+saludo, una repregunta, un mensaje de agendado o cancelación -- esos ya se
+registran solos aparte de esto).
+"""
+
 # Espacio para que Jorge llene manualmente preguntas frecuentes que le
 # vayan llegando y cuya respuesta oficial todavía no está decidida -- el
 # bot nunca debe inventar una respuesta para estos temas mientras sigan
@@ -154,4 +183,7 @@ bot no sepa responder bien. Formato sugerido:
 ]
 """
 
-SYSTEM_PROMPT = CONTEXTO_EMPRESA + ENRUTAMIENTO + REGLAS_GENERALES + ZONAS_GRISES + MENU_SERVICIOS + FAQS
+SYSTEM_PROMPT = (
+    CONTEXTO_EMPRESA + ENRUTAMIENTO + REGLAS_GENERALES + SEGUIMIENTO_ETAPA
+    + ZONAS_GRISES + MENU_SERVICIOS + FAQS
+)

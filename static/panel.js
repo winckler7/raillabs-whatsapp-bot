@@ -8,11 +8,21 @@ const state = {
     buzon: "bandeja",
     etiquetas: [],
     filtroEtiqueta: null,
+    filtroEtapa: "",
     plantillas: [],
     ticksConocidos: {},
 };
 
 let modoGestionPlantillas = false;
+
+const ETAPA_LABEL = {
+    nuevo: "Nuevo",
+    situacion_actual: "Perfilando (actual)",
+    situacion_deseada: "Perfilando (deseada)",
+    propuesta_cita: "Propuesta enviada",
+    agendado: "Agendado",
+    cancelado: "Canceló",
+};
 
 async function api(url, opts) {
     const res = await fetch(url, {
@@ -109,6 +119,9 @@ function renderListaConversaciones() {
     if (state.filtroEtiqueta) {
         filtradas = filtradas.filter((c) => (c.etiquetas || []).some((e) => e.id === state.filtroEtiqueta));
     }
+    if (state.filtroEtapa) {
+        filtradas = filtradas.filter((c) => c.etapa_embudo === state.filtroEtapa);
+    }
 
     lista.innerHTML = filtradas
         .map((c) => {
@@ -118,6 +131,7 @@ function renderListaConversaciones() {
             const puntos = (c.etiquetas || [])
                 .map((e) => `<span class="punto" style="background:${e.color}" title="${escapeHtml(e.nombre)}"></span>`)
                 .join("");
+            const etapaTexto = ETAPA_LABEL[c.etapa_embudo] || c.etapa_embudo;
             return `
                 <li class="conv-item ${activo}" data-id="${c.id}">
                     <div class="conv-main">
@@ -128,6 +142,7 @@ function renderListaConversaciones() {
                     <div class="conv-side">
                         <span class="conv-hora">${formatHora(c.ultimo_mensaje)}</span>
                         <span class="conv-estado ${c.estado}">${c.estado}</span>
+                        <span class="etapa-badge ${c.etapa_embudo}">${etapaTexto}</span>
                         ${badge}
                         <button type="button" class="conv-archivar" data-id="${c.id}" data-archivada="${c.archivada}">${c.archivada ? "Desarchivar" : "Archivar"}</button>
                     </div>
@@ -209,6 +224,10 @@ function mostrarNombreContacto(detalle) {
         (detalle.nombre ? detalle.telefono + " · " : "") +
         "Primer contacto: " +
         new Date(detalle.primer_contacto).toLocaleDateString("es-MX");
+
+    const badge = document.getElementById("etapa-embudo-badge");
+    badge.textContent = ETAPA_LABEL[detalle.etapa_embudo] || detalle.etapa_embudo;
+    badge.className = `etapa-badge ${detalle.etapa_embudo}`;
 }
 
 function mostrarEtiquetasHeader(detalle) {
@@ -433,6 +452,8 @@ document.querySelectorAll(".tab-buzon").forEach((btn) => {
 document.getElementById("selector-cuenta").addEventListener("change", (e) => {
     state.cuentaId = parseInt(e.target.value, 10);
     state.filtroEtiqueta = null;
+    state.filtroEtapa = "";
+    document.getElementById("filtro-etapa").value = "";
     cerrarHilo();
     cargarConversaciones();
     cargarEtiquetasYPlantillas();
@@ -440,6 +461,11 @@ document.getElementById("selector-cuenta").addEventListener("change", (e) => {
 
 document.getElementById("buscador").addEventListener("input", (e) => {
     state.filtro = e.target.value;
+    renderListaConversaciones();
+});
+
+document.getElementById("filtro-etapa").addEventListener("change", (e) => {
+    state.filtroEtapa = e.target.value;
     renderListaConversaciones();
 });
 

@@ -18,6 +18,15 @@
                 <button class="tab-buzon activo" data-buzon="bandeja">Bandeja</button>
                 <button class="tab-buzon" data-buzon="archivadas">Archivadas</button>
             </div>
+            <select id="filtro-etapa">
+                <option value="">Todas las etapas</option>
+                <option value="nuevo">Nuevo</option>
+                <option value="situacion_actual">Perfilando (actual)</option>
+                <option value="situacion_deseada">Perfilando (deseada)</option>
+                <option value="propuesta_cita">Propuesta enviada</option>
+                <option value="agendado">Agendado</option>
+                <option value="cancelado">Canceló</option>
+            </select>
             <div id="filtro-etiquetas"></div>
             <div id="buscador-wrap">
                 <input type="text" id="buscador" placeholder="Buscar por nombre o número">
@@ -37,6 +46,7 @@
                             <button id="btn-editar-nombre" title="Editar nombre">✎</button>
                         </span>
                         <span id="contacto-detalle"></span>
+                        <span id="etapa-embudo-badge" class="etapa-badge"></span>
                         <div id="etiquetas-conversacion"></div>
                     </div>
                     <div id="controles">

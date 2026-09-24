@@ -24,6 +24,7 @@ def run():
             crear_tabla_mensajes(cur)
             backfill_mensajes(cur)
             crear_tablas_fase3(cur)
+            agregar_etapa_embudo(cur)
         conn.commit()
         print(f"Migración completa. cuenta_id de RailLabs = {cuenta_id}")
     except Exception:
@@ -214,6 +215,17 @@ def crear_tablas_fase3(cur):
             PRIMARY KEY (conversacion_id, etiqueta_id)
         )
         """
+    )
+
+
+def agregar_etapa_embudo(cur):
+    # Etapa del embudo de ventas: nuevo -> situacion_actual ->
+    # situacion_deseada -> propuesta_cita -> agendado | cancelado. Las tres
+    # primeras las marca el propio modelo con un marcador embebido en su
+    # respuesta (ver agente_ventas.py); agendado/cancelado se marcan solos
+    # desde el código cuando de verdad se agenda/cancela una cita.
+    cur.execute(
+        "ALTER TABLE conversaciones ADD COLUMN IF NOT EXISTS etapa_embudo TEXT NOT NULL DEFAULT 'nuevo'"
     )
 
 

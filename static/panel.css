@@ -148,6 +148,45 @@ body {
     border-color: #d1d7db;
 }
 
+#filtro-etapa {
+    margin: 8px 12px 0;
+    width: calc(100% - 24px);
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #d1d7db;
+    background: #fff;
+    font-size: 12px;
+    color: #667781;
+}
+
+.etapa-badge {
+    display: inline-block;
+    margin-top: 3px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #fff;
+    background: #8696a0;
+    width: fit-content;
+}
+
+.etapa-badge.situacion_actual, .etapa-badge.situacion_deseada {
+    background: #5bc0de;
+}
+
+.etapa-badge.propuesta_cita {
+    background: #f0ad4e;
+}
+
+.etapa-badge.agendado {
+    background: #00a884;
+}
+
+.etapa-badge.cancelado {
+    background: #d9534f;
+}
+
 #buscador-wrap {
     padding: 8px 12px;
 }

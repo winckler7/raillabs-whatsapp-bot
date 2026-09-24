@@ -143,7 +143,7 @@ def get_conversacion(conversacion_id):
         cur.execute(
             """
             SELECT id, cuenta_id, telefono, estado, modo, notas, nombre, archivada,
-                   primer_contacto, ultimo_mensaje
+                   etapa_embudo, primer_contacto, ultimo_mensaje
             FROM conversaciones WHERE id = %s
             """,
             (conversacion_id,),
@@ -153,7 +153,7 @@ def get_conversacion(conversacion_id):
             return None
         columnas = [
             "id", "cuenta_id", "telefono", "estado", "modo", "notas", "nombre", "archivada",
-            "primer_contacto", "ultimo_mensaje",
+            "etapa_embudo", "primer_contacto", "ultimo_mensaje",
         ]
         detalle = dict(zip(columnas, row))
         detalle["etiquetas"] = get_etiquetas_conversacion(conversacion_id)
@@ -166,6 +166,7 @@ def listar_conversaciones(cuenta_id, archivadas=False):
             """
             SELECT
                 c.id, c.telefono, c.estado, c.modo, c.nombre, c.ultimo_mensaje, c.archivada,
+                c.etapa_embudo,
                 (
                     SELECT contenido FROM mensajes m
                     WHERE m.conversacion_id = c.id
@@ -190,7 +191,7 @@ def listar_conversaciones(cuenta_id, archivadas=False):
         )
         columnas = [
             "id", "telefono", "estado", "modo", "nombre", "ultimo_mensaje", "archivada",
-            "ultimo_texto", "no_leidos", "etiquetas",
+            "etapa_embudo", "ultimo_texto", "no_leidos", "etiquetas",
         ]
         return [dict(zip(columnas, row)) for row in cur.fetchall()]
 
@@ -282,6 +283,32 @@ def get_media(mensaje_id):
         if not row:
             return None
         return {"mime_type": row[0], "contenido": bytes(row[1])}
+
+
+RANGO_ETAPA_EMBUDO = {
+    "nuevo": 0,
+    "situacion_actual": 1,
+    "situacion_deseada": 2,
+    "propuesta_cita": 3,
+    "agendado": 4,
+}
+
+
+def actualizar_etapa_embudo(conversacion_id, etapa):
+    # No retrocede una etapa ya alcanzada (ej. el modelo no debería volver a
+    # marcar "situacion_actual" tarde en la conversación y borrar que ya
+    # llegó a "propuesta_cita") -- excepto "cancelado", que es un resultado
+    # explícito del código (agendó y luego canceló) y siempre se aplica.
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT etapa_embudo FROM conversaciones WHERE id = %s", (conversacion_id,))
+        row = cur.fetchone()
+        if not row:
+            return
+        actual = row[0]
+        if etapa == "cancelado" or RANGO_ETAPA_EMBUDO.get(etapa, -1) >= RANGO_ETAPA_EMBUDO.get(actual, -1):
+            cur.execute(
+                "UPDATE conversaciones SET etapa_embudo = %s WHERE id = %s", (etapa, conversacion_id)
+            )
 
 
 def set_archivada(conversacion_id, archivada):

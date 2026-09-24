@@ -6,6 +6,7 @@ load_dotenv()
 #Create an API Client
 import json
 import os
+import re
 
 from anthropic import Anthropic
 from system_prompt import SYSTEM_PROMPT
@@ -14,6 +15,24 @@ import correo
 
 client = Anthropic()
 model = "claude-sonnet-5"
+
+# Marcador de etapa del embudo que el modelo agrega al final de su propia
+# respuesta (ver SEGUIMIENTO_ETAPA en system_prompt.py) -- se extrae y se
+# limpia aquí antes de que el texto llegue a app.py, así nunca se le manda
+# al cliente ni se guarda en el historial. Se resuelve con un marcador en
+# vez de una tool aparte para no pagar un round-trip extra a la API en
+# (casi) cada mensaje de (casi) toda conversación.
+PATRON_ETAPA = re.compile(r"\s*\[\[ETAPA:([a-z_]+)\]\]\s*$")
+ETAPAS_DESDE_TEXTO = {"situacion_actual", "situacion_deseada", "propuesta_cita"}
+
+
+def _extraer_etapa(texto):
+    m = PATRON_ETAPA.search(texto)
+    if not m:
+        return texto, None
+    texto_limpio = PATRON_ETAPA.sub("", texto).rstrip()
+    etapa = m.group(1) if m.group(1) in ETAPAS_DESDE_TEXTO else None
+    return texto_limpio, etapa
 
 TOOLS = [
     {
@@ -161,18 +180,21 @@ def _ejecutar_tool(nombre, input_, cuenta, sender, conversacion_id):
             )
 
             try:
-                from db import registrar_cita
+                from db import registrar_cita, actualizar_etapa_embudo
                 registrar_cita(
                     cuenta["id"], conversacion_id, sender, nombre_cliente,
                     input_["inicio_iso"], resumen, correo_cliente,
                     resultado.get("event_id"),
                 )
+                # Determinista, no depende de que el modelo se acuerde de
+                # marcar nada -- si agendar_cita tuvo éxito, sí se agendó.
+                actualizar_etapa_embudo(conversacion_id, "agendado")
             except Exception as e:
                 print(f"Error registrando cita en la base de datos: {e}", flush=True)
         return resultado
 
     if nombre == "cancelar_cita":
-        from db import obtener_cita_activa, marcar_cita_cancelada
+        from db import obtener_cita_activa, marcar_cita_cancelada, actualizar_etapa_embudo
 
         cita = obtener_cita_activa(cuenta["id"], sender)
         if not cita:
@@ -181,6 +203,7 @@ def _ejecutar_tool(nombre, input_, cuenta, sender, conversacion_id):
         if cita["google_event_id"]:
             calendario.cancelar_evento(cita["google_event_id"])
         marcar_cita_cancelada(cita["id"])
+        actualizar_etapa_embudo(conversacion_id, "cancelado")
 
         texto_fecha = calendario.formato_legible(cita["inicio"].astimezone(calendario.ZONA))
         if cita["correo"]:
@@ -246,7 +269,11 @@ def chat(messages, cuenta, sender, conversacion_id=None):
         texto = "".join(block.text for block in message.content if block.type == "text")
 
         if message.stop_reason != "tool_use":
-            return texto
+            texto_limpio, etapa = _extraer_etapa(texto)
+            if conversacion_id and etapa:
+                from db import actualizar_etapa_embudo
+                actualizar_etapa_embudo(conversacion_id, etapa)
+            return texto_limpio
 
         working.append({"role": "assistant", "content": [b.model_dump() for b in message.content]})
 
