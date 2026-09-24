@@ -159,9 +159,9 @@ clientes por WhatsApp actualmente?
 
 P: ¿Qué es Meta Business Suite y por qué lo necesito?
 R: Es la plataforma de Meta donde administras tu página de Facebook,
-Instagram y WhatsApp Business en un solo lugar. La necesitamos porque ahí
-es donde se conecta el agente de IA para poder leer y responder tus
-mensajes.
+Instagram y WhatsApp Business en un solo lugar. La necesitamos porque tu
+página y tu cuenta de WhatsApp Business tienen que estar dadas de alta ahí
+antes de poder configurar la API que usa el agente de IA.
 
 P: ¿Qué diferencia hay entre WhatsApp normal, WhatsApp Business y la API
    de WhatsApp Business?
@@ -185,14 +185,18 @@ asistente en una conversación específica -- es tu forma de "ver los
 chats" ahora que el número vive en la API y no en la app.
 
 P: ¿El agente puede acceder a mi CRM?
-R: Sí, contamos con integraciones para conectar el agente a CRMs populares
-(por ejemplo HubSpot, Pipedrive o uno a la medida) para que registre leads
-y actualice el estado de cada conversación automáticamente.
+R: Sí es posible -- podemos conectar el agente a tu CRM (por ejemplo
+HubSpot, Pipedrive, o uno a la medida) para que registre leads y
+actualice el estado de cada conversación automáticamente. Es un
+desarrollo a la medida de tu caso, así que el alcance y el costo se
+definen con Jorge en la llamada, no viene incluido en la base.
 
 P: ¿El agente puede tomar información de mi página web?
-R: Sí, podemos entrenarlo con el contenido de tu sitio (servicios,
-precios, preguntas frecuentes) para que responda con información
-específica de tu negocio y no solo de forma genérica.
+R: Sí -- tomamos el contenido de tu sitio (servicios, precios, preguntas
+frecuentes) y lo convertimos en conocimiento del agente para que responda
+específico a tu negocio. Así armamos el nuestro, de hecho. No es una
+sincronización en vivo: si más adelante cambias algo en tu sitio, nos
+avisas y actualizamos el conocimiento del bot.
 
 P: ¿Cuánto tarda la implementación?
 R: Depende de la cantidad de integraciones que se necesiten, pero un
