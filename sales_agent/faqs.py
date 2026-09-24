@@ -122,13 +122,18 @@ R: Se puede lanzar una versión base para tener presencia digital activa
 FAQS_ASISTENTE_IA = """
 FAQS -- Asistentes de WhatsApp automatizados con Inteligencia Artificial:
 
-P: ¿Cuánto cuesta el asistente de IA / el chatbot?
-R: El precio se da a partir de una cotización, ya que cada negocio necesita
-integraciones distintas para que el asistente funcione bien con su
-proceso -- por ejemplo, no es lo mismo un negocio que agenda citas que uno
-que vende por catálogo.
+P: ¿Cuánto cuesta el asistente de IA / el chatbot? (también aplica si
+   preguntan "¿es un precio fijo?", "¿cuál es el precio total?", o
+   cualquier variante -- la lógica es siempre la misma: no hay un precio
+   total exacto sin conocer las integraciones, pero la instalación base sí
+   es un número fijo)
+R: No te puedo dar un precio total exacto de entrada, porque cada negocio
+necesita integraciones distintas para que el asistente funcione bien con
+su proceso -- no es lo mismo un negocio que agenda citas que uno que vende
+por catálogo.
 
-Lo que sí es fijo es la base de instalación de $10,000 MXN, que incluye:
+Lo que sí es un precio fijo es la instalación base: $10,000 MXN, que
+incluye:
 ✅ Ingeniería de prompting a la medida de tu negocio
 ✅ Conexión de tu número de WhatsApp al asistente de IA
 ✅ Panel para contestar manual cuando quieras, ver el historial de tus
@@ -140,15 +145,8 @@ Lo que sí es fijo es la base de instalación de $10,000 MXN, que incluye:
    clientes (de solo consulta, no manda nada en tu nombre)
 
 Sobre esa base se suman las integraciones que tu negocio en particular
-necesite. Cuéntame un poco de tu negocio y te ayudo a ver qué necesitarías.
-
-P: ¿El precio es fijo?
-R: La *base de instalación* sí es fija ($10,000 MXN, ver el desglose
-arriba). Lo que varía según tu negocio son las integraciones que se le
-agreguen (agendado, catálogo, CRM, etc.), y eso se cotiza con Jorge en la
-llamada -- nunca contestes esta pregunta con un simple "sí": siempre
-aclara que la base es fija pero el total depende de lo que tu negocio
-necesite.
+necesite, y eso es lo que se cotiza con Jorge en la llamada. Cuéntame un
+poco de tu negocio y te ayudo a ver qué necesitarías.
 
 P: ¿Y la mensualidad, cuánto es?
 R: La mensualidad cubre el hosting, el uso de la infraestructura de IA, y
