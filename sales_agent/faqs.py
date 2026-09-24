@@ -163,11 +163,26 @@ Instagram y WhatsApp Business en un solo lugar. La necesitamos porque ahí
 es donde se conecta el agente de IA para poder leer y responder tus
 mensajes.
 
-P: ¿Qué diferencia hay entre WhatsApp normal y WhatsApp Business?
-R: WhatsApp Business es la versión para empresas de Meta, con catálogo,
-respuestas automáticas y, sobre todo, la API que permite conectar
-herramientas externas como nuestro agente de IA. WhatsApp normal no lo
-permite.
+P: ¿Qué diferencia hay entre WhatsApp normal, WhatsApp Business y la API
+   de WhatsApp Business?
+R: Son 3 cosas distintas. WhatsApp normal es el de uso personal. WhatsApp
+Business es la app gratuita para negocios (con catálogo, respuestas
+automáticas), pero se sigue usando manualmente desde el celular, igual que
+el WhatsApp normal. Nuestro asistente no se conecta a ninguna de esas dos
+apps -- se conecta a la *API de WhatsApp Business* (WhatsApp Business
+Platform), que es la plataforma de Meta pensada para que un sistema (como
+nuestro agente de IA) lea y responda los mensajes automáticamente, sin
+depender de que alguien tenga la app abierta en un celular.
+
+P: Si conecto mi número a la API, ¿sigo viendo mis chats en la app de
+   WhatsApp Business normal?
+R: No -- una vez que un número se conecta a la API, deja de poder usarse
+en la app de WhatsApp Business (ni tampoco en la app normal). Por eso el
+número tiene que ser uno dedicado y sin registrar todavía, y por eso te
+damos acceso a nuestro propio panel: ahí puedes ver el historial completo
+de cada cliente, contestar manualmente cuando quieras y pausar al
+asistente en una conversación específica -- es tu forma de "ver los
+chats" ahora que el número vive en la API y no en la app.
 
 P: ¿El agente puede acceder a mi CRM?
 R: Sí, contamos con integraciones para conectar el agente a CRMs populares
@@ -181,8 +196,8 @@ específica de tu negocio y no solo de forma genérica.
 
 P: ¿Cuánto tarda la implementación?
 R: Depende de la cantidad de integraciones que se necesiten, pero un
-agente básico conectado a WhatsApp Business suele estar listo en pocos
-días hábiles.
+agente básico conectado a la API de WhatsApp Business suele estar listo
+en pocos días hábiles.
 
 P: ¿El agente reemplaza por completo a una persona?
 R: Automatiza la primera parte del proceso: atender, calificar y agendar.
@@ -196,8 +211,9 @@ respuesta.
 
 P: ¿Es seguro? ¿Qué pasa con los datos de mis clientes?
 R: La conversación se maneja a través de la infraestructura oficial de
-Meta para WhatsApp Business, y los datos que el agente recopila (nombre,
-interés, disponibilidad) solo se usan para el proceso de venta y agendado.
+Meta para la API de WhatsApp Business, y los datos que el agente recopila
+(nombre, interés, disponibilidad) solo se usan para el proceso de venta y
+agendado.
 
 P: ¿Puedo usar el número de WhatsApp que ya tengo?
 R: No -- la API de WhatsApp Business necesita un número que no esté
