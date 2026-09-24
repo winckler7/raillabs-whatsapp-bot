@@ -70,32 +70,9 @@ completo si el trabajo no satisface; cronograma en tiempo real del
 avance del proyecto; asistencia post-entrega (por ejemplo dónde imprimir
 tarjetas o cómo instalar la hoja membretada).
 
-PREGUNTAS FRECUENTES (Branding):
-P: ¿Qué pasa si necesito modificar un asset o corregir un error?
-R: Comunicación directa por WhatsApp; se resuelve en máximo 24-48 horas.
-
-P: Somos varios en la empresa, ¿personalizan la papelería para cada
-   colaborador?
-R: Sí, sin costo extra.
-
-P: ¿Qué pasa si me urge un entregable?
-R: Se puede priorizar sin sacrificar calidad, avisando con tiempo.
-
-P: Somos varios tomadores de decisiones, ¿cómo hacemos para que el
-   trabajo le guste a todos?
-R: No se diseña sobre gustos sino sobre objetivos comerciales -- si
-   cumple el objetivo, todos ganan, más allá de preferencias personales.
-
-P: ¿Qué pasa si el branding no trae los resultados esperados?
-R: El problema puede estar en la oferta, el proceso de ventas u otras
-   áreas -- hay acceso a una consulta estratégica para diagnosticar.
-
-P: ¿Cómo sé en qué etapa va mi proyecto?
-R: Cronograma compartido en tiempo real con todas las actualizaciones.
-
-P: ¿Qué pasa si necesito ayuda post-entrega (por ejemplo dónde imprimir
-   mis tarjetas)?
-R: Especificaciones en el manual de marca, más soporte por WhatsApp.
+(Preguntas frecuentes de Branding y Motion Graphics: ver FAQS_BRANDING y
+FAQS_MOTION_GRAPHICS en faqs.py -- ahí están listas para responder casi
+textual, no hace falta parafrasearlas.)
 
 
 == VAGÓN DE LEADS -- Redes Sociales · Publicidad · Ventas ==
@@ -141,36 +118,9 @@ de adquisición sea menor que el margen de ganancia; soporte por WhatsApp
 en máximo 24-48 horas; consultas estratégicas en videollamada si hay
 leads pero no cierran ventas.
 
-PREGUNTAS FRECUENTES (Leads):
-P: ¿Qué pasa si no consigo la cantidad de prospectos que quiero?
-R: Se define una proyección realista antes de empezar; si no se cumple,
-   RailLabs sigue trabajando e incluso puede cubrir el gasto publicitario
-   faltante.
-
-P: ¿Qué pasa si gasto más en publicidad de lo que gano en ventas?
-R: Por eso existe la hipótesis publicitaria previa, calculando el costo
-   de adquisición para que el margen siempre sea positivo.
-
-P: ¿Qué pasa si hay errores en los anuncios?
-R: Se revisan con el cliente antes de publicar; si hay error después, se
-   resuelve por WhatsApp en máximo 24-48 horas.
-
-P: ¿Qué pasa si tengo muchos leads pero sigo sin vender?
-R: Puede ser un problema de comunicación, oferta, administración o
-   proceso de ventas -- hay acceso a una videollamada estratégica para
-   diagnosticar y corregir.
-
-P: ¿Qué pasa si no sé cómo comunicarme con mis prospectos por WhatsApp?
-R: El community manager crea una guía de respuestas para encaminar cada
-   tipo de pregunta hacia la venta.
-
-P: ¿Tengo que salir en los videos de mi marca?
-R: Se recomienda, pero si la estrategia lo requiere RailLabs puede hacer
-   voice-over o salir a cámara en representación del cliente.
-
-P: ¿Qué pasa si no sé vender?
-R: RailLabs enseña -- se puede crear un guión de venta por llamada o un
-   workshop de mejores prácticas de cierre.
+(Preguntas frecuentes de Publicidad y Creación de Contenidos: ver
+FAQS_PUBLICIDAD y FAQS_CONTENIDO en faqs.py -- ahí están listas para
+responder casi textual, no hace falta parafrasearlas.)
 
 
 == EXPRESO WEB -- Diseño · Desarrollo Web · Inteligencia Artificial ==
@@ -203,8 +153,8 @@ SERVICIOS INCLUIDOS:
 5. Inteligencia Artificial -- asistentes virtuales personalizados que
    conocen todo sobre la empresa y atienden clientes, más herramientas
    que automatizan tareas operativas y mejoran la experiencia de usuario.
-   (Esta es la línea de servicio bajo la que cae el asistente de IA para
-   WhatsApp de la campaña de Meta actual -- ver PROCESO_DE_VENTA.)
+   (Esta es la línea de servicio bajo la que cae el Asistente de WhatsApp
+   automatizado con IA que se ofrece en el saludo inicial.)
 
 PROCESO GENERAL: primero se hace el diseño visual completo y se presenta
 para aprobación antes de escribir código; una vez aprobado se desarrolla.
@@ -217,28 +167,9 @@ en máximo 36 horas; la mensualidad incluye un fee para agregar
 funcionalidades y mejorar la experiencia cada mes; el cliente aprueba el
 diseño completo antes del desarrollo.
 
-PREGUNTAS FRECUENTES (Web):
-P: ¿Cómo sé que la página va a quedar como quiero?
-R: Se hace un diseño web profesional completo, presentado y revisado con
-   el cliente antes de programar.
-
-P: ¿Qué pasa si hay un bug urgente?
-R: Soporte por WhatsApp, resuelto en máximo 36 horas.
-
-P: ¿Pueden hacer modificaciones después de entregar?
-R: Sí, la mensualidad incluye un fee para agregar funcionalidades nuevas
-   y mejorar el sitio cada mes.
-
-P: ¿Cómo sé si mi página me está dando resultados?
-R: Cada mes se entregan métricas de visitas y eventos registrados.
-
-P: ¿Puedo conseguir clientes a través de mi página?
-R: Sí, con estrategias de SEO, SEM y pauta en redes integradas al
-   proyecto.
-
-P: ¿Qué pasa si me urge tener la página?
-R: Se puede lanzar una versión base para tener presencia digital activa
-   y agregar funcionalidades restantes de forma gradual.
+(Preguntas frecuentes de Tecnología/Web y del Asistente de IA: ver
+FAQS_TECNOLOGIA_WEB y FAQS_ASISTENTE_IA en faqs.py -- ahí están listas
+para responder casi textual, no hace falta parafrasearlas.)
 
 
 CONTACTO GENERAL: hola@raillabs.co | wa.me/524423363382 |
