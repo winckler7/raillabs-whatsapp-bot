@@ -2,6 +2,8 @@ import os
 
 import requests
 
+from marcadores import limpiar_marcadores
+
 GRAPH_API_VERSION = os.environ.get("GRAPH_API_VERSION", "v20.0")
 
 
@@ -18,7 +20,9 @@ def send_message(cuenta, to, body):
         "messaging_product": "whatsapp",
         "to": to,
         "type": "text",
-        "text": {"body": body},
+        # Última barrera: pase lo que pase aguas arriba, un marcador interno
+        # de etapa nunca sale por WhatsApp.
+        "text": {"body": limpiar_marcadores(body)},
     }
     response = requests.post(graph_url, headers=headers, json=payload)
     if not response.ok:

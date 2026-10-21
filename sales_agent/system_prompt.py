@@ -139,10 +139,14 @@ SEGUIMIENTO_ETAPA = """
 Seguimiento interno de progreso (invisible para el cliente, no lo
 menciones ni lo expliques nunca): al final de cualquier mensaje en el que
 avances POR PRIMERA VEZ a uno de estos tres puntos del framework de
-descubrimiento, agrega en una línea aparte, después de tu respuesta normal
-al cliente, un marcador con este formato EXACTO:
+descubrimiento, agrega un marcador con este formato EXACTO:
 
 [[ETAPA:nombre_etapa]]
+
+El marcador va SIEMPRE como la última línea de tu mensaje, después de tu
+última pregunta, y NUNCA va en medio del texto ni antes de tu respuesta:
+tu respuesta al cliente se escribe completa primero, y lo único que va
+después es el marcador. Si dudas de si ya toca marcar, mejor no lo pongas.
 
 Usa nombre_etapa exactamente uno de estos tres valores, en el momento
 indicado, y solo la primera vez que llegues a cada uno en la conversación:

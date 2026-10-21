@@ -6,9 +6,13 @@ load_dotenv()
 #Create an API Client
 import json
 import os
-import re
+import sys
+
+# marcadores.py vive en la raíz del repo (lo comparte graph_api.py).
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 from anthropic import Anthropic
+from marcadores import limpiar_marcadores, separar_etapa
 from system_prompt import SYSTEM_PROMPT
 import calendario
 import correo
@@ -16,23 +20,24 @@ import correo
 client = Anthropic()
 model = "claude-sonnet-5"
 
-# Marcador de etapa del embudo que el modelo agrega al final de su propia
-# respuesta (ver SEGUIMIENTO_ETAPA en system_prompt.py) -- se extrae y se
-# limpia aquí antes de que el texto llegue a app.py, así nunca se le manda
-# al cliente ni se guarda en el historial. Se resuelve con un marcador en
+# El modelo marca en qué etapa del embudo va con un [[ETAPA:...]] dentro de
+# su propia respuesta (ver SEGUIMIENTO_ETAPA en system_prompt.py) -- se
+# extrae y se limpia en marcadores.py, en cualquier posición del texto, antes
+# de que llegue al cliente o al historial. Se resuelve con un marcador en
 # vez de una tool aparte para no pagar un round-trip extra a la API en
 # (casi) cada mensaje de (casi) toda conversación.
-PATRON_ETAPA = re.compile(r"\s*\[\[ETAPA:([a-z_]+)\]\]\s*$")
-ETAPAS_DESDE_TEXTO = {"situacion_actual", "situacion_deseada", "propuesta_cita"}
+RESPUESTA_VACIA = "Perdón, no te entendí bien. ¿Me lo cuentas de otra forma? 🙏"
 
 
-def _extraer_etapa(texto):
-    m = PATRON_ETAPA.search(texto)
-    if not m:
-        return texto, None
-    texto_limpio = PATRON_ETAPA.sub("", texto).rstrip()
-    etapa = m.group(1) if m.group(1) in ETAPAS_DESDE_TEXTO else None
-    return texto_limpio, etapa
+def _historial_limpio(messages):
+    # Los mensajes del bot guardados antes del fix pueden traer marcadores
+    # filtrados; si el modelo los ve en su propio historial tiende a copiarlos.
+    limpio = []
+    for m in messages:
+        if m.get("role") == "assistant" and isinstance(m.get("content"), str):
+            m = {**m, "content": limpiar_marcadores(m["content"])}
+        limpio.append(m)
+    return limpio
 
 TOOLS = [
     {
@@ -203,7 +208,10 @@ def _ejecutar_tool(nombre, input_, cuenta, sender, conversacion_id):
         if cita["google_event_id"]:
             calendario.cancelar_evento(cita["google_event_id"])
         marcar_cita_cancelada(cita["id"])
-        actualizar_etapa_embudo(conversacion_id, "cancelado")
+        try:
+            actualizar_etapa_embudo(conversacion_id, "cancelado")
+        except Exception as e:
+            print(f"Error actualizando etapa del embudo: {e}", flush=True)
 
         texto_fecha = calendario.formato_legible(cita["inicio"].astimezone(calendario.ZONA))
         if cita["correo"]:
@@ -245,7 +253,7 @@ def chat(messages, cuenta, sender, conversacion_id=None):
     # Copia local: las tools solo se resuelven dentro de este turno, no se
     # persiste el intercambio tool_use/tool_result en el historial que se
     # guarda en la base de datos (que sigue siendo solo texto plano).
-    working = list(messages)
+    working = _historial_limpio(messages)
 
     for _ in range(5):
         message = client.messages.create(
@@ -269,11 +277,16 @@ def chat(messages, cuenta, sender, conversacion_id=None):
         texto = "".join(block.text for block in message.content if block.type == "text")
 
         if message.stop_reason != "tool_use":
-            texto_limpio, etapa = _extraer_etapa(texto)
+            texto_limpio, etapa = separar_etapa(texto)
             if conversacion_id and etapa:
-                from db import actualizar_etapa_embudo
-                actualizar_etapa_embudo(conversacion_id, etapa)
-            return texto_limpio
+                # El seguimiento de etapa es secundario: si falla (ej. la base
+                # de datos), nunca debe tumbar la respuesta al cliente.
+                try:
+                    from db import actualizar_etapa_embudo
+                    actualizar_etapa_embudo(conversacion_id, etapa)
+                except Exception as e:
+                    print(f"Error actualizando etapa del embudo: {e}", flush=True)
+            return texto_limpio or RESPUESTA_VACIA
 
         working.append({"role": "assistant", "content": [b.model_dump() for b in message.content]})
 
