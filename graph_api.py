@@ -33,6 +33,22 @@ def send_message(cuenta, to, body):
     return response.json()["messages"][0]["id"]
 
 
+def send_image(cuenta, to, url, caption=None):
+    # Imagen por URL pública (Meta la descarga) -- la usan las fotos de
+    # propiedades del perfil inmobiliaria, que viven en el sitio de Inmobiliaria.
+    graph_url = f"https://graph.facebook.com/{GRAPH_API_VERSION}/{cuenta['phone_number_id']}/messages"
+    headers = {"Authorization": f"Bearer {cuenta['whatsapp_token']}"}
+    image = {"link": url}
+    if caption:
+        image["caption"] = caption
+    payload = {"messaging_product": "whatsapp", "to": to, "type": "image", "image": image}
+    response = requests.post(graph_url, headers=headers, json=payload)
+    if not response.ok:
+        print("Error de WhatsApp API (imagen):", response.status_code, response.text, flush=True)
+    response.raise_for_status()
+    return response.json()["messages"][0]["id"]
+
+
 def subir_media(cuenta, contenido_bytes, mime_type, filename):
     # Sube un archivo al servidor de media de Meta -- regresa un media_id
     # temporal que se usa para mandarlo en un mensaje (no es una URL pública).

@@ -22,6 +22,9 @@ const ETAPA_LABEL = {
     propuesta_cita: "Propuesta enviada",
     agendado: "Agendado",
     cancelado: "Canceló",
+    // Perfil inmobiliaria (demo): Nuevo → Calificado → Visita agendada → Seguimiento
+    calificado: "Calificado",
+    seguimiento: "Seguimiento",
 };
 
 async function api(url, opts) {

@@ -6,7 +6,8 @@ solo corchete, en minúsculas, o cortados si se queda sin tokens).
 """
 import re
 
-ORDEN_ETAPAS = ["situacion_actual", "situacion_deseada", "propuesta_cita"]
+# Las dos últimas son del perfil inmobiliaria (ver sales_agent/perfil.py).
+ORDEN_ETAPAS = ["situacion_actual", "situacion_deseada", "propuesta_cita", "seguimiento", "calificado"]
 
 _MARCADOR = re.compile(r"[ \t]*\[{1,2}\s*ETAPA\s*:\s*([A-Za-z_]+)\s*\]{1,2}[ \t]*", re.IGNORECASE)
 _MARCADOR_CORTADO = re.compile(r"[ \t]*\[{1,2}\s*ETAPA\b[^\]]*\Z|[ \t]*\[\[\s*\Z", re.IGNORECASE)

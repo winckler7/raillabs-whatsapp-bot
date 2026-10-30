@@ -290,6 +290,10 @@ RANGO_ETAPA_EMBUDO = {
     "situacion_actual": 1,
     "situacion_deseada": 2,
     "propuesta_cita": 3,
+    # Perfil inmobiliaria: mismo nivel entre sí para que un prospecto en
+    # seguimiento pueda pasar a calificado (o al revés) si cambia su plazo.
+    "seguimiento": 3,
+    "calificado": 3,
     "agendado": 4,
 }
 

@@ -26,7 +26,7 @@ LIMITE_WHATSAPP = 4000
 # crece despacio -- aun así se recorta para que el costo no suba sin límite.
 MAX_MENSAJES_HISTORIAL = 20
 
-ETAPAS = ["nuevo", "situacion_actual", "situacion_deseada", "propuesta_cita", "agendado", "cancelado"]
+ETAPAS = ["nuevo", "situacion_actual", "situacion_deseada", "propuesta_cita", "agendado", "cancelado", "calificado", "seguimiento"]
 
 PARAM_FECHA = {
     "type": "string",

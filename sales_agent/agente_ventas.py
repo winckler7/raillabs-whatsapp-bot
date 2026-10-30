@@ -13,9 +13,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 
 from anthropic import Anthropic
 from marcadores import limpiar_marcadores, separar_etapa
-from system_prompt import SYSTEM_PROMPT
+from perfil import ES_INMOBILIARIA
 import calendario
 import correo
+import inventario
 
 client = Anthropic()
 model = "claude-sonnet-5"
@@ -140,6 +141,29 @@ TOOLS = [
 ]
 
 
+# El perfil "inmobiliaria" (demo temporal, ver perfil.py) reemplaza el prompt
+# y las tools de RailLabs; las de agendado se reusan tal cual abajo en
+# _ejecutar_tool, solo cambia cómo se arma el resumen de la cita.
+if ES_INMOBILIARIA:
+    from system_prompt_inmobiliaria import SYSTEM_PROMPT, TOOLS
+else:
+    from system_prompt import SYSTEM_PROMPT
+
+
+def _resumen_visita(input_):
+    # agendar_cita del perfil inmobiliaria pide los datos que le sirven al
+    # asesor (inmueble, qué busca, forma de pago, plazo); aquí se convierten
+    # a los dos textos que ya usan la DB, el calendario y los correos.
+    codigo = (input_.get("codigo_propiedad") or "").strip().upper()
+    inmueble = f"Visita a la propiedad {codigo}" if codigo else "Visita para conocer y valuar su inmueble"
+    forma_pago = input_.get("forma_pago") or "no aplica"
+    return {
+        **input_,
+        "contexto_actual": f"{inmueble}. Busca: {input_['que_busca']}",
+        "objetivo_cliente": f"Forma de pago: {forma_pago}. Plazo: {input_['plazo']}",
+    }
+
+
 def add_user_message(messages, text):
     user_message = {"role": "user", "content": text}
     messages.append(user_message)
@@ -150,11 +174,30 @@ def add_assistant_message(messages, text):
     messages.append(assistant_message)
 
 
-def _ejecutar_tool(nombre, input_, cuenta, sender, conversacion_id):
+def _ejecutar_tool(nombre, input_, cuenta, sender, conversacion_id, imagenes):
+    if nombre in inventario.HERRAMIENTAS:
+        resultado, fotos = inventario.consultar(nombre, input_)
+        imagenes.extend(fotos)
+        return resultado
+
+    if nombre == "pasar_con_asesor":
+        correo.enviar_aviso_asesor(input_.get("nombre_cliente"), sender, input_["resumen"])
+        if conversacion_id:
+            try:
+                from db import set_modo
+                # El bot deja de contestar y la conversación queda para que
+                # el asesor responda desde el panel.
+                set_modo(conversacion_id, "humano")
+            except Exception as e:
+                print(f"Error pasando la conversación a modo humano: {e}", flush=True)
+        return {"ok": True}
+
     if nombre == "consultar_disponibilidad":
         return calendario.consultar_disponibilidad()
 
     if nombre == "agendar_cita":
+        if ES_INMOBILIARIA:
+            input_ = _resumen_visita(input_)
         nombre_cliente = input_.get("nombre_cliente") or "Cliente de WhatsApp"
         correo_cliente = input_.get("correo_cliente")
         contexto_actual = input_["contexto_actual"]
@@ -249,10 +292,14 @@ def _ejecutar_tool(nombre, input_, cuenta, sender, conversacion_id):
     return {"ok": False, "error": f"Tool desconocida: {nombre}"}
 
 
-def chat(messages, cuenta, sender, conversacion_id=None):
+def chat(messages, cuenta, sender, conversacion_id=None, imagenes=None):
     # Copia local: las tools solo se resuelven dentro de este turno, no se
     # persiste el intercambio tool_use/tool_result en el historial que se
     # guarda en la base de datos (que sigue siendo solo texto plano).
+    # `imagenes` junta las fotos que pidió enviar_fotos (perfil inmobiliaria)
+    # para que app.py las mande después del texto.
+    if imagenes is None:
+        imagenes = []
     working = _historial_limpio(messages)
 
     for _ in range(5):
@@ -294,7 +341,7 @@ def chat(messages, cuenta, sender, conversacion_id=None):
             {
                 "type": "tool_result",
                 "tool_use_id": block.id,
-                "content": json.dumps(_ejecutar_tool(block.name, block.input, cuenta, sender, conversacion_id)),
+                "content": json.dumps(_ejecutar_tool(block.name, block.input, cuenta, sender, conversacion_id, imagenes)),
             }
             for block in message.content
             if block.type == "tool_use"

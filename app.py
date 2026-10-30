@@ -22,7 +22,7 @@ from db import (
     actualizar_estado_entrega,
     resumen_del_dia,
 )
-from graph_api import send_message, obtener_media_url, descargar_media
+from graph_api import send_message, send_image, obtener_media_url, descargar_media
 from panel import panel_bp
 from calendario import formato_legible, ZONA
 
@@ -214,11 +214,21 @@ def receive_message():
 
     messages = get_historial(cuenta["id"], sender)
     add_user_message(messages, text)
-    respuesta = chat(messages, cuenta, sender, conversacion_id)
+    imagenes = []
+    respuesta = chat(messages, cuenta, sender, conversacion_id, imagenes)
     add_assistant_message(messages, respuesta)
     guardar_historial(cuenta["id"], sender, messages)
     wa_id = send_message(cuenta, sender, respuesta)
     registrar_mensaje(conversacion_id, "saliente", respuesta, wa_message_id=wa_id)
+
+    # Fotos de propiedades (solo perfil inmobiliaria): una falla aquí no
+    # debe tumbar la respuesta de texto, que ya se mandó.
+    for img in imagenes:
+        try:
+            wa_id = send_image(cuenta, sender, img["url"], img.get("caption"))
+            registrar_mensaje(conversacion_id, "saliente", f"📷 {img.get('caption') or 'Foto'}: {img['url']}", wa_message_id=wa_id)
+        except Exception as e:
+            print(f"Error mandando foto {img.get('url')}: {e}", flush=True)
 
     return jsonify(status="ok"), 200
 

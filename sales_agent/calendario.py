@@ -11,6 +11,7 @@ import os
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
+from perfil import ES_INMOBILIARIA
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
@@ -148,7 +149,10 @@ def crear_evento(inicio_iso, nombre_cliente, telefono_cliente, resumen):
             return {"ok": False, "error": "Ese horario ya se ocupó, hay que elegir otro de la lista actualizada."}
 
         evento = {
-            "summary": f"Llamada RailLabs - {nombre_cliente}",
+            "summary": (
+                f"Visita inmobiliaria - {nombre_cliente}" if ES_INMOBILIARIA
+                else f"Llamada RailLabs - {nombre_cliente}"
+            ),
             "description": (
                 f"Cliente: {nombre_cliente}\n"
                 f"WhatsApp: {telefono_cliente}\n\n"
