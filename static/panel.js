@@ -22,9 +22,13 @@ const ETAPA_LABEL = {
     propuesta_cita: "Propuesta enviada",
     agendado: "Agendado",
     cancelado: "Canceló",
-    // Perfil inmobiliaria (demo): Nuevo → Calificado → Visita agendada → Seguimiento
+    // Perfil inmobiliaria (demo): Nuevo → Perfilado → Calificado → Visita
+    // por agendar → Visita agendada → Cerrado (o Seguimiento si no está listo)
+    perfilado: "Perfilado",
     calificado: "Calificado",
+    visita_solicitada: "Visita por agendar",
     seguimiento: "Seguimiento",
+    cerrado: "Cerrado",
 };
 
 async function api(url, opts) {
@@ -231,6 +235,12 @@ function mostrarNombreContacto(detalle) {
     const badge = document.getElementById("etapa-embudo-badge");
     badge.textContent = ETAPA_LABEL[detalle.etapa_embudo] || detalle.etapa_embudo;
     badge.className = `etapa-badge ${detalle.etapa_embudo}`;
+    const selectorEtapa = document.getElementById("selector-etapa");
+    if (selectorEtapa) {
+        selectorEtapa.value = detalle.etapa_embudo;
+    } else {
+        badge.classList.remove("oculto");
+    }
 }
 
 function mostrarEtiquetasHeader(detalle) {
@@ -543,6 +553,16 @@ document.getElementById("contacto-nombre-input").addEventListener("keydown", (e)
 });
 
 document.getElementById("contacto-nombre-input").addEventListener("blur", guardarNombreContacto);
+
+document.getElementById("selector-etapa")?.addEventListener("change", async (e) => {
+    if (!state.conversacionActiva) return;
+    const etapa = e.target.value;
+    await api(`/panel/api/conversaciones/${state.conversacionActiva}/etapa`, {
+        method: "POST",
+        body: JSON.stringify({ etapa }),
+    });
+    await cargarConversaciones();
+});
 
 document.getElementById("btn-notas-toggle").addEventListener("click", () => {
     document.getElementById("panel-etiquetas").classList.add("oculto");

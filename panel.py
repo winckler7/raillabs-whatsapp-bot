@@ -26,17 +26,41 @@ from db import (
     registrar_mensaje_con_media,
     set_archivada,
     set_estado,
+    set_etapa_embudo,
     set_etiquetas_conversacion,
     set_modo,
     set_nombre,
     set_notas,
 )
 from graph_api import enviar_media, send_message, subir_media
+from perfil import ES_INMOBILIARIA
 
 panel_bp = Blueprint("panel", __name__, url_prefix="/panel")
 
 ADMIN_USERNAME = os.environ["ADMIN_USERNAME"]
 ADMIN_PASSWORD = os.environ["ADMIN_PASSWORD"]
+
+# Etapas del filtro de la bandeja. El demo inmobiliario (ver perfil.py) usa
+# su propio embudo y deja moverlas a mano (ej. para marcar "Cerrado").
+if ES_INMOBILIARIA:
+    ETAPAS = [
+        ("nuevo", "Nuevo"),
+        ("perfilado", "Perfilado"),
+        ("calificado", "Calificado"),
+        ("visita_solicitada", "Visita por agendar"),
+        ("agendado", "Visita agendada"),
+        ("seguimiento", "Seguimiento"),
+        ("cerrado", "Cerrado"),
+    ]
+else:
+    ETAPAS = [
+        ("nuevo", "Nuevo"),
+        ("situacion_actual", "Perfilando (actual)"),
+        ("situacion_deseada", "Perfilando (deseada)"),
+        ("propuesta_cita", "Propuesta enviada"),
+        ("agendado", "Agendado"),
+        ("cancelado", "Canceló"),
+    ]
 
 
 def login_required(f):
@@ -74,7 +98,7 @@ def logout():
 @panel_bp.route("/")
 @login_required
 def inbox():
-    return render_template("inbox.html")
+    return render_template("inbox.html", etapas=ETAPAS, etapa_manual=ES_INMOBILIARIA)
 
 
 @panel_bp.route("/api/cuentas")
@@ -164,6 +188,16 @@ def api_set_nombre(conversacion_id):
 def api_set_notas(conversacion_id):
     notas = (request.get_json(silent=True) or {}).get("notas", "")
     set_notas(conversacion_id, notas)
+    return jsonify(status="ok")
+
+
+@panel_bp.route("/api/conversaciones/<int:conversacion_id>/etapa", methods=["POST"])
+@login_required
+def api_set_etapa(conversacion_id):
+    etapa = (request.get_json(silent=True) or {}).get("etapa")
+    if not ES_INMOBILIARIA or etapa not in dict(ETAPAS):
+        return jsonify(error="Etapa inválida"), 400
+    set_etapa_embudo(conversacion_id, etapa)
     return jsonify(status="ok")
 
 

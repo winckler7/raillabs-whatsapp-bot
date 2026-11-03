@@ -287,6 +287,7 @@ def get_media(mensaje_id):
 
 RANGO_ETAPA_EMBUDO = {
     "nuevo": 0,
+    "perfilado": 1,
     "situacion_actual": 1,
     "situacion_deseada": 2,
     "propuesta_cita": 3,
@@ -295,6 +296,9 @@ RANGO_ETAPA_EMBUDO = {
     "seguimiento": 3,
     "calificado": 3,
     "agendado": 4,
+    "visita_solicitada": 4,
+    # Solo se pone a mano desde el panel (perfil inmobiliaria).
+    "cerrado": 5,
 }
 
 
@@ -313,6 +317,15 @@ def actualizar_etapa_embudo(conversacion_id, etapa):
             cur.execute(
                 "UPDATE conversaciones SET etapa_embudo = %s WHERE id = %s", (etapa, conversacion_id)
             )
+
+
+def set_etapa_embudo(conversacion_id, etapa):
+    # Cambio manual desde el panel: a diferencia de actualizar_etapa_embudo,
+    # sí puede retroceder (el asesor corrige o cierra la venta).
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            "UPDATE conversaciones SET etapa_embudo = %s WHERE id = %s", (etapa, conversacion_id)
+        )
 
 
 def set_archivada(conversacion_id, archivada):

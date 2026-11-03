@@ -170,3 +170,23 @@ def enviar_aviso_asesor(nombre_cliente, telefono_cliente, resumen):
             f"<p>Resumen: {resumen}</p>"
         ),
     )
+
+
+def enviar_solicitud_visita(nombre_cliente, telefono_cliente, resumen):
+    """El prospecto aceptó la visita (tool solicitar_visita, perfil
+    inmobiliaria): el asesor le llama para acordar día y hora."""
+    owner_email = os.environ.get("OWNER_EMAIL")
+    if not owner_email:
+        return
+    nombre = nombre_cliente or "Cliente de WhatsApp"
+    resumen_html = resumen.replace("\n", "<br>")
+    _enviar(
+        owner_email,
+        f"Llamar para agendar visita: {nombre}",
+        (
+            f"<p><strong>{nombre} quiere conocer un inmueble.</strong> "
+            f"Llámale para acordar el día y la hora de la visita.</p>"
+            f"<p>Número de teléfono: {telefono_cliente}</p>"
+            f"<p>{resumen_html}</p>"
+        ),
+    )

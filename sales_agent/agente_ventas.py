@@ -142,8 +142,8 @@ TOOLS = [
 
 
 # El perfil "inmobiliaria" (demo temporal, ver perfil.py) reemplaza el prompt
-# y las tools de RailLabs; las de agendado se reusan tal cual abajo en
-# _ejecutar_tool, solo cambia cómo se arma el resumen de la cita.
+# y las tools de RailLabs. En vez de agendar en el calendario, solicitar_visita
+# le pide a un asesor que llame al prospecto para acordar la fecha.
 if ES_INMOBILIARIA:
     from system_prompt_inmobiliaria import SYSTEM_PROMPT, TOOLS
 else:
@@ -151,17 +151,19 @@ else:
 
 
 def _resumen_visita(input_):
-    # agendar_cita del perfil inmobiliaria pide los datos que le sirven al
-    # asesor (inmueble, qué busca, forma de pago, plazo); aquí se convierten
-    # a los dos textos que ya usan la DB, el calendario y los correos.
+    # Texto que recibe el asesor (correo y notas del panel) para llamarle al
+    # prospecto ya sabiendo qué busca.
     codigo = (input_.get("codigo_propiedad") or "").strip().upper()
-    inmueble = f"Visita a la propiedad {codigo}" if codigo else "Visita para conocer y valuar su inmueble"
-    forma_pago = input_.get("forma_pago") or "no aplica"
-    return {
-        **input_,
-        "contexto_actual": f"{inmueble}. Busca: {input_['que_busca']}",
-        "objetivo_cliente": f"Forma de pago: {forma_pago}. Plazo: {input_['plazo']}",
-    }
+    lineas = [
+        f"Inmueble: {codigo}" if codigo else "Visita para conocer y valuar su inmueble",
+        f"Operación: {input_['operacion']}",
+        f"Zona: {input_.get('zona') or 'no especificó'}",
+        f"Presupuesto: {input_['presupuesto']}",
+        f"Plazo: {input_['plazo']}",
+    ]
+    if input_.get("notas"):
+        lineas.append(f"Notas: {input_['notas']}")
+    return "\n".join(lineas)
 
 
 def add_user_message(messages, text):
@@ -192,12 +194,30 @@ def _ejecutar_tool(nombre, input_, cuenta, sender, conversacion_id, imagenes):
                 print(f"Error pasando la conversación a modo humano: {e}", flush=True)
         return {"ok": True}
 
+    if nombre == "solicitar_visita":
+        resumen = _resumen_visita(input_)
+        nombre_cliente = input_.get("nombre_cliente")
+        if conversacion_id:
+            try:
+                from db import actualizar_etapa_embudo, get_conversacion, set_notas
+                conversacion = get_conversacion(conversacion_id)
+                nombre_cliente = nombre_cliente or conversacion["nombre"]
+                # El resumen queda arriba de las notas del chat, para que el
+                # asesor lo vea en el panel aunque no le llegue el correo.
+                notas = f"Visita solicitada -- llamar para agendar\n{resumen}"
+                if conversacion["notas"]:
+                    notas += f"\n\n{conversacion['notas']}"
+                set_notas(conversacion_id, notas)
+                actualizar_etapa_embudo(conversacion_id, "visita_solicitada")
+            except Exception as e:
+                print(f"Error registrando la visita solicitada: {e}", flush=True)
+        correo.enviar_solicitud_visita(nombre_cliente, sender, resumen)
+        return {"ok": True}
+
     if nombre == "consultar_disponibilidad":
         return calendario.consultar_disponibilidad()
 
     if nombre == "agendar_cita":
-        if ES_INMOBILIARIA:
-            input_ = _resumen_visita(input_)
         nombre_cliente = input_.get("nombre_cliente") or "Cliente de WhatsApp"
         correo_cliente = input_.get("correo_cliente")
         contexto_actual = input_["contexto_actual"]

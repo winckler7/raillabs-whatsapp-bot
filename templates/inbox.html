@@ -20,14 +20,9 @@
             </div>
             <select id="filtro-etapa">
                 <option value="">Todas las etapas</option>
-                <option value="nuevo">Nuevo</option>
-                <option value="situacion_actual">Perfilando (actual)</option>
-                <option value="situacion_deseada">Perfilando (deseada)</option>
-                <option value="propuesta_cita">Propuesta enviada</option>
-                <option value="agendado">Agendado</option>
-                <option value="cancelado">Canceló</option>
-                <option value="calificado">Calificado</option>
-                <option value="seguimiento">Seguimiento</option>
+                {% for valor, nombre in etapas %}
+                <option value="{{ valor }}">{{ nombre }}</option>
+                {% endfor %}
             </select>
             <div id="filtro-etiquetas"></div>
             <div id="buscador-wrap">
@@ -48,7 +43,14 @@
                             <button id="btn-editar-nombre" title="Editar nombre">✎</button>
                         </span>
                         <span id="contacto-detalle"></span>
-                        <span id="etapa-embudo-badge" class="etapa-badge"></span>
+                        {% if etapa_manual %}
+                        <select id="selector-etapa" title="Etapa del embudo">
+                            {% for valor, nombre in etapas %}
+                            <option value="{{ valor }}">{{ nombre }}</option>
+                            {% endfor %}
+                        </select>
+                        {% endif %}
+                        <span id="etapa-embudo-badge" class="etapa-badge{% if etapa_manual %} oculto{% endif %}"></span>
                         <div id="etiquetas-conversacion"></div>
                     </div>
                     <div id="controles">

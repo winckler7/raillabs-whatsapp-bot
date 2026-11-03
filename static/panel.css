@@ -187,6 +187,31 @@ body {
     background: #d9534f;
 }
 
+/* Perfil inmobiliaria (demo) */
+.etapa-badge.perfilado {
+    background: #5bc0de;
+}
+
+.etapa-badge.calificado, .etapa-badge.visita_solicitada {
+    background: #f0ad4e;
+}
+
+.etapa-badge.cerrado {
+    background: #2f6f4f;
+}
+
+.etapa-badge.seguimiento {
+    background: #8e7cc3;
+}
+
+#selector-etapa {
+    margin-top: 3px;
+    width: fit-content;
+    font-size: 11px;
+    padding: 1px 4px;
+    border-radius: 999px;
+}
+
 #buscador-wrap {
     padding: 8px 12px;
 }
